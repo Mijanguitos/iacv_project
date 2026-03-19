@@ -55,17 +55,22 @@ def get_bottom_lane_boundary(
     gray = custom_grayscale(frame, method=conv_method)
     # gray_clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
     # gray = gray_clahe.apply(gray)
-    #gaussian blur
+    # gaussian blur
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
     cv2.imwrite(os.path.join(GRAYSCALE_DIR, f"blurred_{conv_method}.jpg"), blurred)
-    
+
+    # crop before edge detection (bottom + center region)
+    cropped = blurred[int(blurred.shape[0] * 0.6):, int(blurred.shape[1] * 0.15):int(blurred.shape[1] * 0.85)]
     edges = detect_edges(
-        blurred,
+        cropped,
         method=edge_method,
         conv_method=conv_method,
         edge_threshold=edge_threshold,
+        direction="horizontal",
+        debug_prefix="bottom_",
     )
-    #hough transform
+
+    # hough transform
     lines = cv2.HoughLinesP(
         edges,
         1,
@@ -90,7 +95,7 @@ def get_bottom_lane_boundary(
         best_candidate_image = frame[int(blurred.shape[0]*0.6):, int(blurred.shape[1]*0.15):int(blurred.shape[1]*0.85)].copy()
         x1, y1, x2, y2 = best_candidate
         cv2.line(best_candidate_image, (x1, y1), (x2, y2), (0, 255, 0), 3)
-        cv2.imwrite(os.path.join(BEST_DIR, f'best_candidate_line_{conv_method}_{edge_method}.png'), best_candidate_image)
+        cv2.imwrite(os.path.join(BEST_DIR, f'bottom_best_candidate_line_{conv_method}_{edge_method}.png'), best_candidate_image)
         return best_candidate
     else:
         return None
@@ -102,7 +107,7 @@ def get_lateral_lane_boundaries(frame,
     hough_threshold=50,
     hough_min_line_length=100,
     hough_max_line_gap=10,
-    sobel_direction = "vertical"
+    direction = "vertical"
 ):
     # Implementation for detecting the bottom lane boundary
     # Ensure debug folders exist
@@ -118,13 +123,16 @@ def get_lateral_lane_boundaries(frame,
     # gray = gray_clahe.apply(gray)
     #gaussian blur
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-    cv2.imwrite(os.path.join(GRAYSCALE_DIR, f"blurred_{conv_method}.jpg"), blurred)
+    cv2.imwrite(os.path.join(GRAYSCALE_DIR, f"blurred_lateral_{conv_method}.jpg"), blurred)
     
+    # no cropping for lateral edges
     edges = detect_edges(
         blurred,
         method=edge_method,
         conv_method=conv_method,
         edge_threshold=edge_threshold,
+        direction=direction,
+        debug_prefix="lateral_",
     )
     #hough transform
     lines = cv2.HoughLinesP(
@@ -136,25 +144,45 @@ def get_lateral_lane_boundaries(frame,
         maxLineGap=hough_max_line_gap,
     )
 
-    output = frame[int(blurred.shape[0] * 0.6):, int(blurred.shape[1] * 0.15):int(blurred.shape[1] * 0.85)].copy()
+    output = frame.copy()
+
+    left_candidate = None
+    right_candidate = None
+    center_x = frame.shape[1] / 2.0
 
     if lines is not None:
         for line in lines:
             x1, y1, x2, y2 = line[0]
+            avg_x = (x1 + x2) / 2.0
+
+            # Keep track of closest lines to the image center on each side
+            if avg_x < center_x:
+                # left side: pick the line with the maximum avg_x (closest to center)
+                if left_candidate is None or avg_x > (left_candidate[0] + left_candidate[2]) / 2.0:
+                    left_candidate = line[0]
+            else:
+                # right side: pick the line with the minimum avg_x (closest to center)
+                if right_candidate is None or avg_x < (right_candidate[0] + right_candidate[2]) / 2.0:
+                    right_candidate = line[0]
+
             cv2.line(output, (x1, y1), (x2, y2), (0, 255, 0), 2)
 
     cv2.imwrite(os.path.join(LINES_DIR, f'lateral_lines_{conv_method}_{edge_method}.png'), output)
-    
-    # Select the first line as the best candidate and plot it in another image
-    if lines is not None and len(lines) > 0:
-        best_candidate = lines[0][0]  # First line is the best candidate
-        best_candidate_image = frame[int(blurred.shape[0]*0.6):, int(blurred.shape[1]*0.15):int(blurred.shape[1]*0.85)].copy()
-        x1, y1, x2, y2 = best_candidate
-        cv2.line(best_candidate_image, (x1, y1), (x2, y2), (0, 255, 0), 3)
-        cv2.imwrite(os.path.join(BEST_DIR, f'best_candidate_line_{conv_method}_{edge_method}.png'), best_candidate_image)
-        return best_candidate
-    else:
-        return None
+
+    # Save best left/right boundary candidates
+    if left_candidate is not None:
+        left_img = frame.copy()
+        x1, y1, x2, y2 = left_candidate
+        cv2.line(left_img, (x1, y1), (x2, y2), (0, 255, 0), 3)
+        cv2.imwrite(os.path.join(BEST_DIR, f'lateral_best_left_line_{conv_method}_{edge_method}.png'), left_img)
+
+    if right_candidate is not None:
+        right_img = frame.copy()
+        x1, y1, x2, y2 = right_candidate
+        cv2.line(right_img, (x1, y1), (x2, y2), (0, 255, 0), 3)
+        cv2.imwrite(os.path.join(BEST_DIR, f'lateral_best_right_line_{conv_method}_{edge_method}.png'), right_img)
+
+    return left_candidate, right_candidate
 
 
 def parameter_search(
@@ -229,22 +257,24 @@ def custom_grayscale(frame, method="default"):
     else:
         raise ValueError("Invalid grayscale method")
 
-def detect_edges(blurred, method="sobel", conv_method="pca", edge_threshold=None):
-    # Perform edge detection on bottom 40% of the frame
-    # also crop 15% from the left and right to avoid detecting lane markings on the sides of the road
-    height = blurred.shape[0]
-    width = blurred.shape[1]
-    bottom_40_percent = blurred[int(height * 0.6):, int(width * 0.15):int(width * 0.85)]
+def detect_edges(blurred, method="sobel", conv_method="pca", edge_threshold=None, direction="horizontal", debug_prefix=""):
+    """Run edge detection on the provided image.
+
+    Cropping (if needed) must be performed by the caller.
+    """
 
     if method == "sobel":
-        sobel_y = cv2.Sobel(bottom_40_percent, cv2.CV_64F, 0, 1, ksize=3)
-        sobel_y = np.absolute(sobel_y)
-        sobel_y = sobel_y / sobel_y.max() * 255  # normalize to 0-255
-        edges = np.uint8(sobel_y)
+        if direction == "horizontal":  # For horizontal edges (lane markings), detect vertical gradients
+            sobel = cv2.Sobel(blurred, cv2.CV_64F, 0, 1, ksize=3)
+        else:  # For vertical edges (lateral boundaries), detect horizontal gradients
+            sobel = cv2.Sobel(blurred, cv2.CV_64F, 1, 0, ksize=3)
+        sobel = np.absolute(sobel)
+        sobel = sobel / sobel.max() * 255  # normalize to 0-255
+        edges = np.uint8(sobel)
     elif method == "canny":
-        edges = cv2.Canny(bottom_40_percent, 30, 90)
+        edges = cv2.Canny(blurred, 30, 90)
     elif method == "laplacian":
-        laplacian = cv2.Laplacian(bottom_40_percent, cv2.CV_64F)
+        laplacian = cv2.Laplacian(blurred, cv2.CV_64F)
         laplacian = np.absolute(laplacian)
         laplacian = laplacian / laplacian.max() * 255  # normalize to 0-255
         edges = np.uint8(laplacian)
@@ -254,5 +284,5 @@ def detect_edges(blurred, method="sobel", conv_method="pca", edge_threshold=None
     if edge_threshold is not None:
         _, edges = cv2.threshold(edges, edge_threshold, 255, cv2.THRESH_BINARY)
 
-    cv2.imwrite(os.path.join(EDGES_DIR, f"edges_{method}_{conv_method}.jpg"), edges)
+    cv2.imwrite(os.path.join(EDGES_DIR, f"{debug_prefix}edges_{method}_{conv_method}.jpg"), edges)
     return edges
