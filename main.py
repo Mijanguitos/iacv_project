@@ -2,7 +2,7 @@ import cv2
 from lane_detection import get_bottom_lane_boundary, parameter_search, get_lateral_lane_boundaries
 
 input_path = "clips/clip_1.mp4"
-
+lane_center_point = [1100, 540]  
 
 def main():
     vid = cv2.VideoCapture(input_path)
@@ -19,7 +19,8 @@ def main():
     # Use the preferred combination in the main script
     best_line = get_bottom_lane_boundary(frame, edge_method="sobel", conv_method="r_g_minus_b")
     print("Best line (sobel + r_g_minus_b):", best_line)
-    get_lateral_lane_boundaries(frame, edge_threshold=30, edge_method="sobel", conv_method="r_g_minus_b", direction="vertical")
+    get_lateral_lane_boundaries(frame, edge_threshold=30, edge_method="sobel", conv_method="r_g_minus_b", direction="vertical"
+                                , lane_center=lane_center_point)
 
 
 if __name__ == "__main__":

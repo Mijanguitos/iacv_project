@@ -107,7 +107,8 @@ def get_lateral_lane_boundaries(frame,
     hough_threshold=50,
     hough_min_line_length=100,
     hough_max_line_gap=10,
-    direction = "vertical"
+    direction = "vertical",
+    lane_center = None
 ):
     # Implementation for detecting the bottom lane boundary
     # Ensure debug folders exist
@@ -146,29 +147,43 @@ def get_lateral_lane_boundaries(frame,
 
     output = frame.copy()
 
+    # center_x = frame.shape[1] / 2.0
+    if lane_center is None:
+        raise ValueError("lane_center must be provided for lateral boundary detection")
+    center_x, center_y = lane_center[0], lane_center[1]
+
     left_candidate = None
     right_candidate = None
-    center_x = frame.shape[1] / 2.0
-
+    min_left_dist = float('inf')
+    min_right_dist = float('inf')
+    pos_lines=0
     if lines is not None:
         for line in lines:
             x1, y1, x2, y2 = line[0]
-            avg_x = (x1 + x2) / 2.0
+            m = (y2 - y1) / (x2 - x1)
+            if abs(m)<1:
+                continue
+            dist, intersection_x = calculate_distance_to_center(line[0], center_x, center_y)
+            
 
-            # Keep track of closest lines to the image center on each side
-            if avg_x < center_x:
-                # left side: pick the line with the maximum avg_x (closest to center)
-                if left_candidate is None or avg_x > (left_candidate[0] + left_candidate[2]) / 2.0:
+            # Determine side based on avg_x
+            if intersection_x < center_x:
+                # left side: pick the line with the smallest distance to center
+                if dist < min_left_dist:
+                    min_left_dist = dist
                     left_candidate = line[0]
             else:
-                # right side: pick the line with the minimum avg_x (closest to center)
-                if right_candidate is None or avg_x < (right_candidate[0] + right_candidate[2]) / 2.0:
+                # right side: pick the line with the smallest distance to center
+                if dist < min_right_dist:
+                    min_right_dist = dist
                     right_candidate = line[0]
 
             cv2.line(output, (x1, y1), (x2, y2), (0, 255, 0), 2)
-
+            pos_lines+=1
+    print(pos_lines)
+    cv2.circle(output, (int(center_x), int(center_y)), 5, (255, 0, 0), -1)  # Mark the center point
     cv2.imwrite(os.path.join(LINES_DIR, f'lateral_lines_{conv_method}_{edge_method}.png'), output)
-
+    print(os.path.join(LINES_DIR, f'lateral_lines_{conv_method}_{edge_method}.png'))
     # Save best left/right boundary candidates
     if left_candidate is not None:
         left_img = frame.copy()
@@ -232,6 +247,35 @@ def parameter_search(
             results[(gray_method, edge_method)] = best_line
 
     return results
+
+
+def calculate_distance_to_center(line, center_x, center_y):
+    """
+    Calculate the horizontal distance from the center point to the intersection
+    of the line with the horizontal line at center_y.
+    """
+    x1, y1, x2, y2 = line
+    
+    # If the line is vertical (x1 == x2), intersection x is x1
+    if x1 == x2:
+        intersection_x = x1
+    elif y1 == y2:
+        # If the line is horizontal, use the center_y directly
+        intersection_x = center_x  # Horizontal line doesn't affect lateral distance
+    else:
+        # Calculate slope
+        m = (y2 - y1) / (x2 - x1)
+        if abs(m)<1:
+            return [float('inf'), 0]  # Ignore nearly horizontal lines for lateral boundary detection
+        # Solve for x at y = center_y
+        # y - y1 = m(x - x1)
+        # center_y - y1 = m(intersection_x - x1)
+        intersection_x = x1 + (center_y - y1) / m
+    
+    # Horizontal distance
+    distance = abs(center_x - intersection_x)
+    return [distance, intersection_x]
+
 
 
 def custom_grayscale(frame, method="default"):
