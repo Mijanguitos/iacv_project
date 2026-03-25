@@ -172,7 +172,8 @@ def get_top_lane_boundary(
         frame,
         template,
         scales=[0.8, 0.9, 1.0, 1.1],
-        threshold=0.85,
+        # threshold=0.85, first vid
+        threshold=0.75,
         debug_dir="debug_template"
         )
 
