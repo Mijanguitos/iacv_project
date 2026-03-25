@@ -1,9 +1,9 @@
 import cv2
 from lane_detection import get_bottom_lane_boundary, get_top_lane_boundary, parameter_search, get_lateral_lane_boundaries
 
-# input_path = "clips/clip_1.mp4"
+input_path = "clips/clip_1.mp4"
 # input_path = "clips/clip_2.mp4"
-input_path = "clips/clip_3.mp4"
+# input_path = "clips/clip_3.mp4"
 lane_center_point = [1100, 540]  
 
 def main():
@@ -14,19 +14,19 @@ def main():
     template_pin = cv2.imread("./data/templates/template_pin_real.png")
     
     
-    # target_height = 40  # approximate pin height
-    target_height = 75  # approximate pin height second vid
-    # Vid 3 75 px approx
+    # # target_height = 40  # approximate pin height
+    # target_height = 75  # approximate pin height second vid
+    # # Vid 3 75 px approx
 
-    scale = target_height / template_pin.shape[0]
+    # scale = target_height / template_pin.shape[0]
 
-    template_pin = cv2.resize(
-        template_pin,
-        None,
-        fx=scale,
-        fy=scale,
-        interpolation=cv2.INTER_AREA
-    )
+    # template_pin = cv2.resize(
+    #     template_pin,
+    #     None,
+    #     fx=scale,
+    #     fy=scale,
+    #     interpolation=cv2.INTER_AREA
+    # )
 
     if not ret or frame is None:
         print("Failed to read the first frame from the video")
