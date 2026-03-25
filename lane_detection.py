@@ -30,7 +30,7 @@ def get_vid_lane_boundaries(vid):
 def get_frame_lane_boundaries(frame):
     # Implementation for detecting lane boundaries in a single frame
     top = get_top_lane_boundary(frame)
-    bottom = get_bottom_lane_boundary(frame)
+    bottom = get_bottom_lane_boundary(frame, edge_threshold=30, edge_method="sobel", conv_method="r_g_minus_b")
     # left, right = get_lateral_lane_boundaries(frame)
     # return top, bottom, left, right
     return top, bottom
@@ -650,10 +650,11 @@ def get_bottom_lane_boundary(
     frame,
     edge_method="sobel",
     conv_method="pca",
-    edge_threshold=None,
+    edge_threshold=0.3,
     hough_threshold=50,
     hough_min_line_length=100,
     hough_max_line_gap=10,
+    slope_threshold=0.3,
 ):
     # Implementation for detecting the bottom lane boundary
     # Ensure debug folders exist
@@ -694,23 +695,47 @@ def get_bottom_lane_boundary(
 
     output = frame[int(blurred.shape[0] * 0.6):, int(blurred.shape[1] * 0.15):int(blurred.shape[1] * 0.85)].copy()
 
+    best_candidate = None
     if lines is not None:
         for line in lines:
             x1, y1, x2, y2 = line[0]
+
+            # compute slope and filter by threshold, keep line order
+            if x2 == x1:
+                line_slope = float('inf')
+            else:
+                line_slope = (y2 - y1) / (x2 - x1)
+
+            if abs(line_slope) > slope_threshold:
+                # optional visualization: rejected as red
+                cv2.line(output, (x1, y1), (x2, y2), (0, 0, 255), 1)
+                continue
+
+            if best_candidate is None:
+                best_candidate = line[0]
+
             cv2.line(output, (x1, y1), (x2, y2), (0, 255, 0), 2)
 
     cv2.imwrite(os.path.join(LINES_DIR, f'lines_{conv_method}_{edge_method}.png'), output)
-    
-    # Select the first line as the best candidate and plot it in another image
-    if lines is not None and len(lines) > 0:
-        best_candidate = lines[0][0]  # First line is the best candidate
+
+    # Select the first valid candidate (filtered by slope)
+    if best_candidate is not None:
         best_candidate_image = frame[int(blurred.shape[0]*0.6):, int(blurred.shape[1]*0.15):int(blurred.shape[1]*0.85)].copy()
         x1, y1, x2, y2 = best_candidate
         cv2.line(best_candidate_image, (x1, y1), (x2, y2), (0, 255, 0), 3)
         cv2.imwrite(os.path.join(BEST_DIR, f'bottom_best_candidate_line_{conv_method}_{edge_method}.png'), best_candidate_image)
         return best_candidate
-    else:
-        return None
+
+    # fallback: first Hough line if nothing passes slope filter
+    if lines is not None and len(lines) > 0:
+        fallback = lines[0][0]
+        fallback_image = frame[int(blurred.shape[0]*0.6):, int(blurred.shape[1]*0.15):int(blurred.shape[1]*0.85)].copy()
+        x1, y1, x2, y2 = fallback
+        cv2.line(fallback_image, (x1, y1), (x2, y2), (0, 255, 255), 3)
+        cv2.imwrite(os.path.join(BEST_DIR, f'bottom_best_candidate_line_{conv_method}_{edge_method}.png'), fallback_image)
+        return fallback
+
+    return None
 
 def get_lateral_lane_boundaries(frame,
     edge_method="sobel",
