@@ -1,5 +1,5 @@
 import cv2
-from lane_detection import get_bottom_lane_boundary, get_top_lane_boundary, parameter_search, get_lateral_lane_boundaries
+from lane_detection import get_bottom_lane_boundary, get_top_lane_boundary, parameter_search, get_lateral_lane_boundaries, plot_lane_boundaries
 
 # input_path = "clips/clip_1.mp4"
 # input_path = "clips/clip_2.mp4"
@@ -36,11 +36,14 @@ def main():
     # parameter_search(frame)
 
     # Use the preferred combination in the main script
-    best_line = get_bottom_lane_boundary(frame, edge_threshold=30, edge_method="sobel", conv_method="r_g_minus_b")
-    print("Best line (sobel + r_g_minus_b):", best_line)
-    get_lateral_lane_boundaries(frame, edge_threshold=30, edge_method="sobel", conv_method="r_g_minus_b", direction="vertical"
+    ## TODO hacer que las coordenadas de la bottom line sean relativas a la imagen, no al crop que hago
+    bottom_line = get_bottom_lane_boundary(frame, edge_threshold=30, edge_method="sobel", conv_method="r_g_minus_b")
+    print("Best line (sobel + r_g_minus_b):", bottom_line)
+    lateral_lines = get_lateral_lane_boundaries(frame, edge_threshold=30, edge_method="sobel", conv_method="r_g_minus_b", direction="vertical"
                                 , lane_center=lane_center_point)
-    get_top_lane_boundary(frame, template_pin)
+    top_line = get_top_lane_boundary(frame, template_pin)
+
+    plot_lane_boundaries(frame, bottom_line, lateral_lines, top_line)
 
 
 if __name__ == "__main__":

@@ -301,7 +301,24 @@ def get_top_lane_boundary(
         dtype=np.int32
     )
 
+def plot_lane_boundaries(frame, bottom_line, lateral_lines, top_line):
+    vis = frame.copy()
 
+    if bottom_line is not None:
+        x1, y1, x2, y2 = bottom_line
+        cv2.line(vis, (x1, y1), (x2, y2), (0, 255, 0), 3)
+
+    if lateral_lines is not None:
+        for line in lateral_lines:
+            if line is not None:
+                x1, y1, x2, y2 = line
+                cv2.line(vis, (x1, y1), (x2, y2), (255, 0, 255), 3)
+
+    if top_line is not None:
+        x1, y1, x2, y2 = top_line
+        cv2.line(vis, (x1, y1), (x2, y2), (255, 255, 0), 3)
+
+    cv2.imwrite(os.path.join(BEST_DIR, "final_lane_boundaries.png"), vis)
 
 
 # def detect_pin_midpoints_sift(
