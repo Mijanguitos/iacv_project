@@ -1,9 +1,10 @@
 import cv2
-from lane_detection import get_bottom_lane_boundary, get_top_lane_boundary, parameter_search, get_lateral_lane_boundaries, plot_lane_boundaries
+from lane_detection import get_bottom_lane_boundary, get_top_lane_boundary, get_lateral_lane_boundaries, postprocess_boundary_lines
+from plot_utils import plot_lane_boundaries
 
-# input_path = "clips/clip_1.mp4"
+input_path = "clips/clip_1.mp4"
 # input_path = "clips/clip_2.mp4"
-input_path = "clips/clip_3.mp4"
+# input_path = "clips/clip_3.mp4"
 lane_center_point = [1100, 540]  
 
 def main():
@@ -12,38 +13,21 @@ def main():
     vid.release()
 
     template_pin = cv2.imread("./data/templates/template_pin_real.png")
-    
-    
     # # target_height = 40  # approximate pin height
     # target_height = 75  # approximate pin height second vid
     # # Vid 3 75 px approx
 
-    # scale = target_height / template_pin.shape[0]
-
-    # template_pin = cv2.resize(
-    #     template_pin,
-    #     None,
-    #     fx=scale,
-    #     fy=scale,
-    #     interpolation=cv2.INTER_AREA
-    # )
-
     if not ret or frame is None:
         print("Failed to read the first frame from the video")
         return
-
-    # Run a full parameter search (writes debug outputs for each combo)
-    # parameter_search(frame)
-
-    # Use the preferred combination in the main script
-    ## TODO hacer que las coordenadas de la bottom line sean relativas a la imagen, no al crop que hago
+   
     bottom_line = get_bottom_lane_boundary(frame, edge_threshold=30, edge_method="sobel", conv_method="r_g_minus_b")
     print("Best line (sobel + r_g_minus_b):", bottom_line)
     lateral_lines = get_lateral_lane_boundaries(frame, edge_threshold=30, edge_method="sobel", conv_method="r_g_minus_b", direction="vertical"
                                 , lane_center=lane_center_point)
     top_line = get_top_lane_boundary(frame, template_pin)
-
-    plot_lane_boundaries(frame, bottom_line, lateral_lines, top_line)
+    lane_borders = postprocess_boundary_lines(bottom_line, lateral_lines, top_line)
+    plot_lane_boundaries(frame, lane_borders, base_dir = "debug")
 
 
 if __name__ == "__main__":
