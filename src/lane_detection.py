@@ -136,6 +136,7 @@ def get_top_lane_boundary(
     template,
     min_points=3,
     crop_region=[0.0, 0.4, 0.0, 1.0],
+    mode="mid" # "mid" for line connecting midpoints of pins, "bottom" for connecting the bottom of the pins 
 ):
 
     top_region, _, _ = crop_by_ratio(frame, crop_region)
@@ -155,6 +156,7 @@ def get_top_lane_boundary(
         # threshold=0.85, first vid
         threshold=0.75,
         debug_dir="debug_template",
+        mode=mode
     )
 
     if len(midpoints) < min_points:
@@ -298,6 +300,7 @@ def detect_pin_midpoints_template(
     threshold=0.6,
     nms_threshold=0.1,
     debug_dir=None,
+    mode="mid" # "mid" for line connecting midpoints of pins, "bottom" for connecting the bottom of the pins
 ):
     """
     Detect bowling pins using multi-scale template matching.
@@ -351,8 +354,12 @@ def detect_pin_midpoints_template(
     vis = frame.copy()
     for box in final_boxes:
         x1, y1, x2, y2 = box
-        mx = int((x1 + x2) / 2)
-        my = int((y1 + y2) / 2)
+        if mode == "bottom":
+            mx = int((x1 + x2) / 2)
+            my = y2  # Use the bottom of the pin
+        else:
+            mx = int((x1 + x2) / 2)
+            my = int((y1 + y2) / 2)
         midpoints.append((mx, my))
         # Debug drawing
         cv2.rectangle(vis, (x1, y1), (x2, y2), (0, 255, 0), 2)
