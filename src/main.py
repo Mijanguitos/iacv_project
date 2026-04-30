@@ -1,11 +1,11 @@
 import cv2
-from lane_detection import get_bottom_lane_boundary, get_top_lane_boundary, get_lateral_lane_boundaries, postprocess_boundary_lines
-from lane_rectification import rectify_bowling_lane
-from plot_utils import plot_lane_boundaries
+from lane_detection.lane_detection import get_bottom_lane_boundary, get_top_lane_boundary, get_lateral_lane_boundaries, postprocess_boundary_lines
+from rectification.lane_rectification import rectify_bowling_lane
+from utils.plot_utils import plot_lane_boundaries
 
-input_path = "clips/clip_1.mp4"
-# input_path = "clips/clip_2.mp4"
-# input_path = "clips/clip_3.mp4"
+input_path = "data/clips/clip_1.mp4"
+# input_path = "data/clips/clip_2.mp4"
+# input_path = "data/clips/clip_3.mp4"
 lane_center_point = [1100, 540]  
 
 def main():
