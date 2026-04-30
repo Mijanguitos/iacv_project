@@ -6,7 +6,7 @@ import cv2 as cv2
 import math
 
 # Name of the clip's video file to be used
-VIDEO_FILE = str("clip_2.mp4")
+VIDEO_FILE = str("data/clips/clip_2.mp4")
 
 LANE_POINTS = [[872, 684], [1228, 696], [1241, 277], [1146, 273]] # For clip 1
 LANE_POINTS = [[819, 813], [1308, 819] , [1442, 175], [1254, 175]] # For clip 2
