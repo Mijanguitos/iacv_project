@@ -78,7 +78,8 @@ def circle_detection(frame: cv2.typing.MatLike) -> np.ndarray:
     """
     Performs all the needed operations to the frame and returns and array of ball candidates
     
-    """ 
+    """
+    print("Detecting ball candidates...")
     circles = cv2.HoughCircles(frame,
                                method=cv2.HOUGH_GRADIENT_ALT,
                                dp=1.2,      #1.2                 # downsample size
@@ -105,6 +106,7 @@ def create_graph(ball_candidates: list) -> nx.DiGraph:
         nx.DiGraph: Weighted directed graph ready for trajectory analysis.
     
     """
+    print("Constructing candidate graph...")
 
     DG = nx.DiGraph()
 
@@ -157,7 +159,7 @@ def create_graph(ball_candidates: list) -> nx.DiGraph:
                             # 3. Only connect if the movement is realistic
                             if dist < max_distance and dist != 0.00:
                                 DG.add_edge(prev_node_id, ball_count, weight=dist)
-                                print(f"Connected: Frame {prev_frame}->{frame} (Dist: {dist:.2f})")
+                                #print(f"Connected: Frame {prev_frame}->{frame} (Dist: {dist:.2f})")
 
                 # Update visualization metadata
                 color_map.append(colors[frame])
@@ -181,7 +183,170 @@ def create_graph(ball_candidates: list) -> nx.DiGraph:
 
     return DG
 
+def reconstruct_trayectory(DG):
+    """
+    Finds the longest path in the DAG and extracts the coordinates.
+    """
+    print("Reconstructing trajectory...")
+    # 1. Find the longest path (list of node IDs)
+    longest_path_nodes = nx.dag_longest_path(DG, weight=None) # weight=None finds max number of nodes
+    
+    # 2. Extract positions for plotting
+    # Assuming nodes have 'pos' attribute stored as np.array([x, y])
+    trajectory_coords = np.array([DG.nodes[n]['pos'] for n in longest_path_nodes])
+    radii = np.array([DG.nodes[n]['rad'] for n in longest_path_nodes])
 
+    frames = [DG.nodes[n]['frame'] for n in longest_path_nodes]
+    
+    return longest_path_nodes, trajectory_coords, frames, radii
+
+def plot_trajectory(coords, frames):
+    plt.figure(figsize=(10, 6))
+    
+    x = coords[:, 0]
+    y = coords[:, 1]
+    
+    # Plot the line connecting the detections
+    plt.plot(x, y, '-o', color='teal', markersize=4, label='Longest Trajectory', alpha=0.6)
+    
+    # Highlight start and end
+    plt.scatter(x[0], y[0], color='green', s=100, label='Start', zorder=5)
+    plt.scatter(x[-1], y[-1], color='red', s=100, label='End', zorder=5)
+    
+    # Annotate frame numbers for context
+    for i, txt in enumerate(frames):
+        if i % 2 == 0: # Annotate every 2nd frame to keep it clean
+            plt.annotate(txt, (x[i], y[i]), fontsize=8, alpha=0.8)
+
+    plt.title("Reconstructed Ball Trajectory")
+    plt.xlabel("X Position")
+    plt.ylabel("Y Position")
+    plt.gca().invert_yaxis() # Often needed for image coordinates
+    plt.legend()
+    plt.grid(True, linestyle='--', alpha=0.5)
+    plt.axis('equal')
+    plt.show()
+
+def trajectory_interpolation(coords, frames):
+    """
+    LS interpolation to accomodate the treyectory
+    """
+    print("Interpolating...")
+    n = len(coords)
+
+    # Interpolate x values for every frame
+    # Cuadratic model for x values
+
+    # Design matrix
+    f = np.array(frames)
+    x = coords[:, 0]
+    n = len(f)
+    A = np.transpose(np.array([f**2, f, np.ones(n)]))
+    N = A.T @ A
+    N_inv = np.linalg.inv(N)
+    T = A.T @ x
+
+    params_x = N_inv @ T
+
+    new_x = A @ params_x
+
+    # Cuadratic model y = a*x^2 + b*x + c
+    # Design matrix
+    y = coords[:, 1]
+    #A = np.transpose(np.array([x**2, x, np.ones(n)]))
+
+    N = A.T @ A
+    N_inv = np.linalg.inv(N)
+    T = A.T @ y
+
+    params_y = N_inv @ T
+
+    new_y = A @ params_y
+
+    # Interpolate for every frame
+    f = np.arange(frames[0], frames[-1])
+    A = np.transpose(np.array([f**2, f, np.ones(len(f))]))
+
+    x = A @ params_x
+    y = A @ params_y
+
+    return np.transpose([x, y])
+
+def radius_interpolation(radius, frames):
+    r = radius.T
+
+    # Cubic
+    f = np.array(frames)
+    A = np.transpose(np.array([f, np.ones(len(f))]))
+
+    N = A.T @ A
+    N_inv = np.linalg.inv(N)
+    T = A.T @ r
+
+    params_r = N_inv @ T
+    
+    f = np.arange(frames[0], frames[-1])
+    A = np.transpose(np.array([f, np.ones(len(f))]))
+
+    r = A @ params_r
+
+    return r
+    
+
+def plot_dual_trajectories(orig_coords, interp_coords, orig_frames=None):
+    """
+    Plots the original detected trajectory and the interpolated version.
+    
+    Args:
+        orig_coords (np.ndarray): Nx2 array of (x, y) from the graph.
+        interp_coords (np.ndarray): Mx2 array of (x, y) after interpolation.
+        orig_frames (list): Optional frame numbers for the original detections.
+    """
+    plt.figure(figsize=(12, 7))
+    ax = plt.gca()
+
+    # 1. Plot Interpolated Trajectory (The "Smooth" path)
+    plt.plot(interp_coords[:, 0], interp_coords[:, 1], 
+             linestyle='--', color='gray', linewidth=1.5, 
+             label='Interpolated Path', alpha=0.6)
+
+    # 2. Plot Original Trajectory (The "Detected" path)
+    plt.plot(orig_coords[:, 0], orig_coords[:, 1], 
+             '-o', color='teal', linewidth=2, markersize=6, 
+             label='Original Detections', markeredgecolor='white')
+
+    # 3. Highlight Start and End of the total sequence
+    plt.scatter(interp_coords[0, 0], interp_coords[0, 1], 
+                color='green', s=120, label='Start', zorder=5, edgecolors='black')
+    plt.scatter(interp_coords[-1, 0], interp_coords[-1, 1], 
+                color='red', s=120, label='End', zorder=5, edgecolors='black')
+
+    # 4. Optional: Annotate original frame numbers
+    if orig_frames is not None:
+        for i, frame_num in enumerate(orig_frames):
+            plt.annotate(f"F{frame_num}", 
+                         (orig_coords[i, 0], orig_coords[i, 1]),
+                         textcoords="offset points", 
+                         xytext=(0, 10), 
+                         ha='center', 
+                         fontsize=8, 
+                         color='teal',
+                         fontweight='bold')
+
+    # Formatting
+    plt.title("Ball Trajectory: Original vs. Interpolated", fontsize=14)
+    plt.xlabel("X Coordinate (px)")
+    plt.ylabel("Y Coordinate (px)")
+    
+    # Standard image coordinate system: Y increases downwards
+    ax.invert_yaxis() 
+    
+    plt.legend(loc='best', frameon=True, shadow=True)
+    plt.grid(True, linestyle=':', alpha=0.7)
+    plt.tight_layout()
+    plt.axis('equal')
+    plt.show()
+    
 if __name__ == "__main__":
 
     # Load the video clip and get total number of frames and frame rate
@@ -215,6 +380,8 @@ if __name__ == "__main__":
 
         circles = circle_detection(preprocessed_frame)
         ball_candidates.append(circles)
+
+        #print(ball_candidates)
         
         if circles is not None:
             for (x, y, r) in circles:
@@ -225,11 +392,41 @@ if __name__ == "__main__":
             
         cv2.imshow("Video Frame", preprocessed_frame)
 
-        # Wait for 1ms for key press to continue or exit if 'q' is pressed
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
-    create_graph(ball_candidates)
-    print(ball_candidates)
+    candidates_graph = create_graph(ball_candidates)
+    path_nodes, coords, frames, radii = reconstruct_trayectory(candidates_graph)
+
+    plot_trajectory(coords, frames)
+
+    new_coords = trajectory_interpolation(coords, frames)
+    plot_trajectory(new_coords, frames)
+
+    plot_dual_trajectories(coords, new_coords, frames)
+
+    new_radii = radius_interpolation(np.array(radii), frames)
+
+    i = 0
+    CAP = cv2.VideoCapture(VIDEO_FILE)                  # Class for video captured from the clip's file   
+
+    while True:
+        ret, frame = CAP.read()         # Get the next video frame
+        if not ret:                     # If there is not frame, break
+            break
+
+        if i > frames[0] and i < frames[-1]:
+            x = int(new_coords[i - frames[0], 0])
+            y = int(new_coords[i - frames[0], 1])
+            r = int(new_radii[i - frames[0]])
+            cv2.circle(frame, (x, y), r, (0, 255, 0), 4)
+            cv2.circle(frame, (x, y), 1,  (0, 128, 255), -1)
+
+        cv2.imshow("Video Frame", frame)
+
+        i += 1
+        # Wait for 1ms for key press to continue or exit if 'q' is pressed
+        if cv2.waitKey(50) & 0xFF == ord('q'):
+            break
 
     print(-1)
