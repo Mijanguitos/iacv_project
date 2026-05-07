@@ -12,6 +12,9 @@ consists of:
     - Applying localized contrast enhancement to improve the distinction
       between the background (wooden lane) and the ball.
 
+Finally, it generates and saves another video in the provided path for 
+the next steps.
+
 Usage example:
 
     * To run tests:
@@ -97,7 +100,7 @@ def frame_preprocessing(frame: cv2.typing.MatLike,
 def video_preprocessing(video_path: os.PathLike[str],
                         save_path: os.PathLike[str],
                         lane_points: np.ndarray) -> None:
-    """
+    """ Preprocessing of whole video.
     Reads the video file from path, applies the preprocessing steps for each frame and saves it as a 
     video in the provided path.
     Args:
@@ -118,12 +121,12 @@ def video_preprocessing(video_path: os.PathLike[str],
     height = CAP.get(cv2.CAP_PROP_FRAME_HEIGHT)   # float `height`
     
     # Video writer class
-    output = cv2.VideoWriter(save_path, -1, fps, (int(width), int(height)))
+    output = cv2.VideoWriter(save_path, -1, fps, (int(width), int(height)), isColor=False)
 
     # Compute the modified polygon for masking
     modified_polygon = compute_modified_polygon(lane_points, 15, 20)
 
-    # Loops to do preproce
+    # Loops to perform preprocessing
     while True:
         ret, frame = CAP.read()
 
