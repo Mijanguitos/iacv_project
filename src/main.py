@@ -1,7 +1,7 @@
 import cv2
 from lane_detection.lane_detection import get_bottom_lane_boundary, get_top_lane_boundary, get_lateral_lane_boundaries, postprocess_boundary_lines
-from rectification.lane_rectification import rectify_bowling_lane
-from utils.plot_utils import plot_lane_boundaries
+from rectification.lane_rectification import pixel_to_world_3d, rectify_bowling_lane, estimate_camera_parameters
+from utils.plot_utils import plot_lane_boundaries, plot_bowling_3d
 
 input_path = "data/clips/clip_1.mp4"
 # input_path = "data/clips/clip_2.mp4"
@@ -31,13 +31,43 @@ def main():
     plot_lane_boundaries(frame, lane_borders, base_dir = "debug")
     
     
-    rectified, H = rectify_bowling_lane(
-    image=frame,
-    src_points=lane_borders,
-    pixels_per_meter=120,
-    output_path="output/rectified_lane.png"
-    )
+    # rectified, H = rectify_bowling_lane(
+    # image=frame,
+    # src_points=lane_borders,
+    # pixels_per_meter=120,
+    # output_path="output/rectified_lane.png"
+    # )
+    
+    # Camera parameter estimation 
+    # Calculates K, R, and t based on the lane corners [cite: 108, 110]
+    K, rvec, tvec = estimate_camera_parameters(lane_borders, frame.shape)
 
+
+    # --- 3. Ball Tracking & 3D Lifting Loop ---
+    ball_trajectory_3d = [pixel_to_world_3d(lane_center_point, K, rvec, tvec)]  # Start with initial position of the ball (example point)
+
+    # Standard Lane dimensions for visualization [cite: 88, 139]
+    world_lane_corners = [
+        [0, 18.29, 0],      # near-left (foul line)
+        [1.054, 18.29, 0],   # near-right
+        [1.054, 0, 0],       # far-right (pins)
+        [0, 0, 0]            # far-left
+    ]
+
+
+    
+    if ball_trajectory_3d:
+        plot_bowling_3d(
+            lane_corners=world_lane_corners, 
+            ball_trajectory=ball_trajectory_3d, 
+            rvec=rvec, 
+            tvec=tvec, 
+            output_path="output/3d_ball_trajectory.png"
+        )
+    cv2.circle(frame, (lane_center_point[0], lane_center_point[1]), 10, (255, 0, 0), -1)
+
+    # Save the result to verify
+    cv2.imwrite("debug/lane_center_visualization.png", frame)
 
 
 if __name__ == "__main__":
