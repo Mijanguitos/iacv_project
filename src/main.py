@@ -4,7 +4,7 @@ from lane_detection.lane_detection import get_bottom_lane_boundary, get_top_lane
 from rectification.lane_rectification import   rectify_bowling_lane
 from utils.plot_utils import plot_lane_boundaries, plot_bowling_3d
 from utils.utils import load_json
-from utils.video_utils import generate_trajectory_video
+from utils.video_utils import generate_trajectory_board_image, generate_trajectory_board_video, generate_trajectory_video, generate_trajectory_video_with_board
 
 input_path = "data/clips/clip_1.mp4"
 # input_path = "data/clips/clip_2.mp4"
@@ -52,22 +52,74 @@ def main():
     
 
 
-    # Transform points to rectified space for visualization
-    x_y_trajectory = np.array(list(zip(trajectory_data["observations"]["x"], trajectory_data["observations"]["y"])), dtype=np.float32).reshape(-1, 1, 2)
-    f_x_y_trajectory_int = np.array(list(zip(trajectory_data["estimations"]["f"], trajectory_data["estimations"]["x"], trajectory_data["estimations"]["y"])), dtype=np.float32).reshape(-1, 1, 3)
-    
-    rectified_points = cv2.perspectiveTransform(x_y_trajectory, H)
+    # Transform contact points to rectified space for visualization.
+    observation_x = trajectory_data["observations"]["x"]
+    observation_y = trajectory_data["observations"]["y"]
+    observation_r = trajectory_data["observations"]["r"]
+    observation_contact_xy = np.array(
+        [(x, y + r) for x, y, r in zip(observation_x, observation_y, observation_r)],
+        dtype=np.float32,
+    ).reshape(-1, 1, 2)
+
+    estimation_f = trajectory_data["estimations"]["f"]
+    estimation_x = trajectory_data["estimations"]["x"]
+    estimation_y = trajectory_data["estimations"]["y"]
+    estimation_r = trajectory_data["estimations"]["r"]
+    f_x_y_trajectory_int = np.array(
+        [(int(frame), float(x), float(y + r)) for frame, x, y, r in zip(estimation_f, estimation_x, estimation_y, estimation_r)],
+        dtype=np.float32,
+    ).reshape(-1, 1, 3)
+
+    rectified_points = cv2.perspectiveTransform(observation_contact_xy, H)
 
     rectified_points_int = np.round(rectified_points).astype(np.int32)
     for pt in rectified_points_int:
         cv2.circle(rectified, tuple(pt[0]), 5, (0, 0, 255), -1)
     cv2.imwrite("output/rectified_lane_with_points.png", rectified)
 
+    # Build rectified trajectory points with frame indexes for the board video.
+    estimated_contact_xy = np.array(
+        [(x, y + r) for x, y, r in zip(estimation_x, estimation_y, estimation_r)],
+        dtype=np.float32,
+    ).reshape(-1, 1, 2)
+    rectified_estimated_points = cv2.perspectiveTransform(estimated_contact_xy, H).reshape(-1, 2)
+    rectified_estimated_points_with_frames = [
+        (int(frame), float(x), float(y))
+        for frame, (x, y) in zip(estimation_f, rectified_estimated_points)
+    ]
 
-    generate_trajectory_video(
+    rectified_height, rectified_width = rectified.shape[:2]
+    source_board_corners = [
+        (0.0, rectified_height - 1.0),
+        (rectified_width - 1.0, rectified_height - 1.0),
+        (rectified_width - 1.0, 0.0),
+        (0.0, 0.0),
+    ]
+
+    board_template = cv2.imread("data/templates/board_tracking.jpg")
+    if board_template is None:
+        raise IOError("Cannot load board template: data/templates/board_tracking.jpg")
+    board_height, board_width = board_template.shape[:2]
+    destination_board_corners = [
+        (0.0, board_height - 1.0),
+        (board_width - 1.0, board_height - 1.0),
+        (board_width - 1.0, 0.0),
+        (0.0, 0.0),
+    ]
+
+    generate_trajectory_video_with_board(
         input_video_path=input_path,
-        points = f_x_y_trajectory_int.reshape(-1, 3),  # (frame, x, y)
-        output_video_path="output/ball_trajectory_video.mp4")
+        image_points=f_x_y_trajectory_int.reshape(-1, 3),
+        board_points=rectified_estimated_points_with_frames,
+        board_template_path="data/templates/board_tracking.jpg",
+        source_lane_corners=source_board_corners,
+        destination_board_corners=destination_board_corners,
+        output_video_path="output/combined_trajectory_video.mp4",
+        color=(0, 255, 0),
+        thickness=2,
+        point_radius=4,
+        board_margin=20,
+    )
 
 
 
