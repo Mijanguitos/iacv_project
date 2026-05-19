@@ -1,6 +1,6 @@
 import cv2
 from lane_detection.lane_detection import get_bottom_lane_boundary, get_top_lane_boundary, get_lateral_lane_boundaries, postprocess_boundary_lines
-from rectification.lane_rectification import pixel_to_world_3d, rectify_bowling_lane, estimate_camera_parameters
+from rectification.lane_rectification import calibrate_K_pure_projective, estimate_camera_parameters_with_vp, find_focal_length_for_height, full_calibration_and_lifting, lift_point_to_3d, pixel_to_world_3d, reconstruct_3d_homogeneous, rectify_bowling_lane, estimate_camera_parameters, validate_reprojection
 from utils.plot_utils import plot_lane_boundaries, plot_bowling_3d
 
 input_path = "data/clips/clip_1.mp4"
@@ -40,12 +40,24 @@ def main():
     
     # Camera parameter estimation 
     # Calculates K, R, and t based on the lane corners [cite: 108, 110]
-    K, rvec, tvec = estimate_camera_parameters(lane_borders, frame.shape)
+    # K, rvec, tvec = estimate_camera_parameters(lane_borders, frame.shape)
+    # f = find_focal_length_for_height(lane_borders, 1.5, frame.shape)
+    # K, rvec, tvec = estimate_camera_parameters_with_vp(lane_borders, frame.shape)
+
+    
+    # validate_reprojection(frame, lane_borders, K, rvec, tvec)
+    # # --- 3. Ball Tracking & 3D Lifting Loop ---
+    # ball_trajectory_3d = [pixel_to_world_3d(lane_center_point, K, rvec, tvec)]  # Start with initial position of the ball (example point)
 
 
-    # --- 3. Ball Tracking & 3D Lifting Loop ---
-    ball_trajectory_3d = [pixel_to_world_3d(lane_center_point, K, rvec, tvec)]  # Start with initial position of the ball (example point)
+    K, rvec, tvec, H_iw = full_calibration_and_lifting(lane_borders, frame.shape)
 
+    ball_trajectory_3d = [
+    lift_point_to_3d(lane_center_point, H_iw)
+    ]
+
+    # K= calibrate_K_pure_projective(lane_borders)
+    # ball_trajectory_3d, rvec, tvec = reconstruct_3d_homogeneous(lane_center_point, K, lane_borders)
     # Standard Lane dimensions for visualization [cite: 88, 139]
     world_lane_corners = [
         [0, 18.29, 0],      # near-left (foul line)
