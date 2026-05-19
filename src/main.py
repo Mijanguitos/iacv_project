@@ -38,9 +38,6 @@ def main():
         edge_method=config.lane_detection.bottom.edge_method,
         conv_method=config.lane_detection.bottom.conv_method,
     )
-    print(
-        f"Best line ({config.lane_detection.bottom.edge_method} + {config.lane_detection.bottom.conv_method}): {bottom_line}"
-    )
 
     # 1.2 Detect lateral boundaries
     lateral_lines = get_lateral_lane_boundaries(
@@ -127,8 +124,7 @@ def main():
 
     ## 5. Generate video overlaying ball trajectory on original video and rectified lane
     # TODO: Add spin to video
-    # print("image points: ", inter_points_contact_with_frames.shape)
-    # print("rectified points: ", rectified_inter_points_contact_with_frames.shape)
+
     generate_trajectory_video_with_board(
         input_video_path=config.paths.input_clip_path,
         image_points=inter_points_contact_with_frames,
