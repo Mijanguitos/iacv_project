@@ -1,3 +1,5 @@
+import json
+
 import cv2
 import numpy as np
 
@@ -107,3 +109,10 @@ def crop_by_ratio(image, crop_region):
     cropped = image[top:bottom, left:right]
 
     return cropped, top, left
+
+
+
+def load_json(json_path):
+    with open(json_path, "r") as f:
+        data = json.load(f)
+    return data
