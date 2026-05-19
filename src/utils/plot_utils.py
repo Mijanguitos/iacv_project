@@ -1,9 +1,6 @@
 import os
 import cv2
 import numpy as np
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-
 
 def plot_lane_boundaries(frame, lane_borders, base_dir="debug/final_boundaries"):
     vis = frame.copy()
