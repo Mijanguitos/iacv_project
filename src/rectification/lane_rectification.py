@@ -89,3 +89,10 @@ def transform_points(points, H):
     pts = np.array(points, dtype=np.float32).reshape(-1,1,2)
     transformed = cv2.perspectiveTransform(pts, H)
     return transformed.reshape(-1,2)
+
+
+
+def warp_points_for_viz(points, H):
+    pts = np.array(points, dtype=np.float32).reshape(-1,1,2)
+    transformed = cv2.perspectiveTransform(pts, H)
+    return transformed.reshape(-1,2)

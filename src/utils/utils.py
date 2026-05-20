@@ -1,6 +1,9 @@
+import json
+
 import cv2
 import numpy as np
-
+import yaml
+from types import SimpleNamespace
 
 def custom_grayscale(frame, method="default"):
     if method == "default":
@@ -107,3 +110,66 @@ def crop_by_ratio(image, crop_region):
     cropped = image[top:bottom, left:right]
 
     return cropped, top, left
+
+
+
+def load_json(json_path):
+    with open(json_path, "r") as f:
+        data = json.load(f)
+    return data
+
+def load_config(path):
+    with open(path, "r") as f:
+        config_dict = yaml.safe_load(f)
+    return json_to_namespace(config_dict)
+
+def json_to_namespace(d):
+    if isinstance(d, dict):
+        return SimpleNamespace(
+            **{k: json_to_namespace(v) for k, v in d.items()}
+        )
+    return d
+
+
+def obtain_corners_from_image(image_or_path, return_image: bool = False):
+    """Return the four image corners in the order:
+    [bottom-left, bottom-right, top-right, top-left].
+
+    Parameters
+    ----------
+    image_or_path : str or np.ndarray
+        Either a file path to an image or an already-loaded image (BGR numpy array).
+    return_image : bool
+        If True, also return the loaded image as the second element.
+
+    Returns
+    -------
+    corners : list of (float, float)
+        Four (x, y) corner coordinates in the order described above.
+    image : np.ndarray (optional)
+        The loaded image when `return_image` is True.
+
+    Note: accepting either a path or an image is convenient for callers; prefer
+    passing an image array when you already have it (avoids extra disk I/O).
+    """
+
+    # Load image if a path is provided
+    if isinstance(image_or_path, str):
+        img = cv2.imread(image_or_path)
+        if img is None:
+            raise IOError(f"Cannot load image: {image_or_path}")
+    else:
+        img = image_or_path
+
+    h, w = img.shape[:2]
+    # bottom-left, bottom-right, top-right, top-left
+    corners = [
+        (0.0, float(h - 1.0)),
+        (float(w - 1.0), float(h - 1.0)),
+        (float(w - 1.0), 0.0),
+        (0.0, 0.0),
+    ]
+
+    if return_image:
+        return corners, img
+    return corners

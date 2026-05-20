@@ -1,8 +1,6 @@
 import os
-
 import cv2
 import numpy as np
-
 
 def plot_lane_boundaries(frame, lane_borders, base_dir="debug/final_boundaries"):
     vis = frame.copy()
@@ -26,3 +24,8 @@ def plot_lane_boundaries(frame, lane_borders, base_dir="debug/final_boundaries")
             cv2.circle(vis, (x, y), 5, (0, 255, 255), -1)
 
     cv2.imwrite(os.path.join(base_dir, "final_lane_boundaries.png"), vis)
+
+def plot_points(points, image, output_path):
+    for pt in points:
+        cv2.circle(image, tuple(pt[0]), 5, (0, 0, 255), -1)
+    cv2.imwrite(output_path, image)
