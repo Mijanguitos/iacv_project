@@ -1,7 +1,5 @@
-# List of Frame_lane_boundaries objs
 import os
 import numpy as np
-
 import cv2
 from sklearn.linear_model import RANSACRegressor
 

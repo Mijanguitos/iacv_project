@@ -1,6 +1,22 @@
 \section{Methodology}
 
 \subsection{Lane Detection}
+Lane detection is a discipline common to many industries. It encompasses identifying the edges of a lane, often to aid in vision systems, such as autonomous driving or in our case, to restrict our domain to the 2d bowling alley, to focus on a specific ROI for ball detection, and to perform the 2d rectification homography for ball trajectory estimation. The true 3d position of the ball can be estimated by using the constraint that the ball is always in contact with the lane, and has a constant radius.
+
+Lane detection in this industry requires the use of different techniques to estimate each of the lane boundaries. Some techniques are common to all the borders, but other vary significantly. Next, the common methods will be presented, to later delineate how each boundary was finally estimated.
+
+Standard methods
+For the cases where the lines (boundaries) to be estimated are visible, a series of standardized steps is used. These consist in a transformation from the 3 channel image into a single channel, a method to detect edges, and a ranking or selection process for those edges which will finally output the selected border.
+
+Single channel transformation
+The method we choose to transform the 3 channel image into a 1 channel image is crucial, and will dictate how effectively edges will be detected, as well as the parameters needed for these edge detection methods. We want to find a transformation from Rnxnx3 to Rnxnx1, where the lines we are interested in present a sudden change in intensity.
+
+A baseline transformation could be the normal grayscale conversion (INCLUIR FORMULA)
+Other industries and authors in the automotive industry use a specific transformation named rgminusb. (INCLUIR CITAS, dónde se usa y por qué se usa)
+
+In order to mitigate different illumination conditions between different videos, PCA could be an interesting approach. Keeping the first principal component, which accounts for the maximum variability could help identify these borders (edges) in an easier way.
+Others suggest previously transforming the color space to HSV, suggesting that it is mostly changes in the hue and not in the other parameters that helps identifying lines.
+
 
 \subsection{Ball Dynamics Tracking}
 
