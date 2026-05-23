@@ -8,14 +8,62 @@ Lane detection in this industry requires the use of different techniques to esti
 Standard methods
 For the cases where the lines (boundaries) to be estimated are visible, a series of standardized steps is used. These consist in a transformation from the 3 channel image into a single channel, a method to detect edges, and a ranking or selection process for those edges which will finally output the selected border.
 
-Single channel transformation
+Single channel (grayscale) transformation
 The method we choose to transform the 3 channel image into a 1 channel image is crucial, and will dictate how effectively edges will be detected, as well as the parameters needed for these edge detection methods. We want to find a transformation from Rnxnx3 to Rnxnx1, where the lines we are interested in present a sudden change in intensity.
 
-A baseline transformation could be the normal grayscale conversion (INCLUIR FORMULA)
+A baseline transformation could be the standard grayscale conversion [Cita opencv, cita libro]
+RGB to Gray: Y= 0.299⋅R+0.587⋅G+0.114⋅B 
 Other industries and authors in the automotive industry use a specific transformation named rgminusb. (INCLUIR CITAS, dónde se usa y por qué se usa)
+I = R+G-B
+This conversion is inspired in the specific nature of lane markings on roads (high contrast of lane markings against gray roads). This method was proposed and has been proved to work better than standard grayscale conversion for those cases.
+
 
 In order to mitigate different illumination conditions between different videos, PCA could be an interesting approach. Keeping the first principal component, which accounts for the maximum variability could help identify these borders (edges) in an easier way.
 Others suggest previously transforming the color space to HSV, suggesting that it is mostly changes in the hue and not in the other parameters that helps identifying lines.
+
+
+Blur
+Performing a blur method (normally gaussian blur) is standard in a lane detection pipeline because it reduces the high frequency elements, enhances image quality, minimizing false edges caused by noise.
+
+
+
+Edge detection
+For edge detection, 3 methods were explored: Laplacian, canny and sobel.
+# Definir los 3 metodos.
+Laplacian
+Canny
+Sobel
+
+
+Hough transform/HoughLines (HoughLinesP)
+
+
+Bottom border detection
+The first step is to convert to grayscale and perform gaussian blurring on the image. Then,  the frame is cropped so only a specific bottom portion of the image is visible. After analyzing multiple bowling videos, we determined this should be done in the following crop region: [0.6, 1.0, 0.15, 0.85].
+Next, the edges are to be detected. After this, the houghlinesp method is used to rank the best lines. Finally, a final filter is applied, to filter the lines that don’t have an inclination that aligns with the expected one.
+
+After testing the different combinations, the best results were obtained using the r+g-b conversion equation, and sobel filter for bottom lane boundary so this is the chosen one for the detection pipeline
+
+Lateral borders detection
+The first step is to perform the standardized preprocessing mentioned before (grayscale conversion + gaussian blur).
+Later, the edges are to be detected. In this case, the frame is not cropped, and the sobel filter is used but with a different direction (it detects vertical lines). After this, the houghlinesp method is used to rank the best lines, and lines are filtered out if they have a slope which is too horizontal.
+However, a different approach is taken in this case. One additional element is needed. With the bottom lane, there is only one line which is common to all the lanes. This is not the case for the lateral boundaries, where there are multiple parallel lines (one pair for each of the lanes in the bowling alley). For this reason, (and because we cant a priori know which lane is to be tracked), we assume that we know the center point (or any point) inside the lane that we want to detect. For simplicity, we use the center point of the image (as normally the central lane is the one we want to detect), but this point could be changed if we wanted to detect a lane in a different position. We use this point in a heuristic to detect the lateral boundaries. 
+
+We draw a horizontal line that passes through this point. Then we intersect all the detected lines with this horizontal line. We calculate the distance from the intersection to the center point.
+Then, the heuristic used to select the 2 lines is that the right boundary is the closest detected line to the right of the lane center point, and the left boundary is the closest detected line to the left of the lane center point.
+
+
+Top border detection
+Multiple methods were explored to try to detect this lane. Initially, a similar approach was explored, but with no success due to the nature of this line. It is blocked by the pins. The second approach was to try to use sift, to detect the pins in a scale invariant way. However, due to the lack of keypoints in a pin, and because of the small size of them in the videos (pins are far away from camera), the final method chosen was to use template matching exploiting the knowledge that we sort of know the size the pins will have.
+For additional support, no lateral cropping is performed, to leverage pins in other lanes, in order to estimate the boundary more robustly and have more points to support the calculation of the line. 
+
+
+
+References
+Lane dimensions: [https://starsandstrikes.com/how-long-is-a-bowling-lane-and-other-bowling-stats-2/]
+
+Color conversion: [https://docs.opencv.org/3.4/de/d25/imgproc_color_conversions.html]
+Color conversion: [https://cl72.org/090imagePLib/books/Gonzales,Woods-Digital%20Image%20Processing%203rd%20ed.pdf]
 
 
 \subsection{Ball Dynamics Tracking}
