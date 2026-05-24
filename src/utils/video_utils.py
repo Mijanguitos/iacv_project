@@ -6,6 +6,8 @@ import numpy as np
 
 Point = Tuple[int, int, int]
 Point2D = Tuple[float, float]
+import plotly.graph_objects as go
+
 
 
 def _normalize_trajectory_points(points: Sequence[Point]) -> list[Point]:
@@ -177,3 +179,152 @@ def generate_trajectory_video_with_board(
 
 
 
+def create_3d_bowling_visualization(
+    trajectory_3d,
+    lane_width=1.066,
+    lane_length=18.29
+):
+    """
+    trajectory_3d: list of (frame_id, x, y, z)
+    """
+
+    trajectory_3d = sorted(trajectory_3d, key=lambda p: p[0])
+
+    frames = []
+    x_vals, y_vals, z_vals = [], [], []
+
+    for frame_id, x, y, z in trajectory_3d:
+        x_vals.append(x / 100)  # meters
+        y_vals.append(y / 100)  # meters
+        z_vals.append(z)        # meters (already correct)
+
+    x_vals = np.array(x_vals)
+    y_vals = np.array(y_vals)
+    z_vals = np.array(z_vals)
+
+    fig = go.Figure()
+
+    # =========================
+    # Lane surface
+    # =========================
+    fig.add_trace(go.Mesh3d(
+        x=[0, lane_width, lane_width, 0],
+        y=[0, 0, lane_length, lane_length],
+        z=[0, 0, 0, 0],
+        color="lightgray",
+        opacity=0.5
+    ))
+
+    # =========================
+    # Origin marker (NEW)
+    # =========================
+    fig.add_trace(go.Scatter3d(
+        x=[0],
+        y=[0],
+        z=[0],
+        mode="markers+text",
+        marker=dict(size=6, color="black"),
+        text=["Origin"],
+        textposition="top center",
+        name="Origin"
+    ))
+
+    # =========================
+    # Axis direction indicators (NEW but minimal)
+    # =========================
+    fig.add_trace(go.Scatter3d(
+        x=[0, lane_width],
+        y=[0, 0],
+        z=[0, 0],
+        mode="lines",
+        line=dict(color="blue", width=4),
+        name="X axis (width)"
+    ))
+
+    fig.add_trace(go.Scatter3d(
+        x=[0, 0],
+        y=[0, lane_length],
+        z=[0, 0],
+        mode="lines",
+        line=dict(color="green", width=4),
+        name="Y axis (length)"
+    ))
+
+    fig.add_trace(go.Scatter3d(
+        x=[0, 0],
+        y=[0, 0],
+        z=[0, 0.15],
+        mode="lines",
+        line=dict(color="red", width=4),
+        name="Z axis (height)"
+    ))
+
+    # =========================
+    # Full trajectory
+    # =========================
+    fig.add_trace(go.Scatter3d(
+        x=x_vals,
+        y=y_vals,
+        z=z_vals,
+        mode="lines",
+        line=dict(color="red", width=5)
+    ))
+
+    # =========================
+    # Animation frames
+    # =========================
+    for i in range(len(x_vals)):
+        frames.append(go.Frame(
+            data=[
+                go.Scatter3d(
+                    x=[x_vals[i]],
+                    y=[y_vals[i]],
+                    z=[z_vals[i]],
+                    mode="markers",
+                    marker=dict(size=8, color="blue")
+                )
+            ],
+            name=str(i)
+        ))
+
+    # Initial ball
+    fig.add_trace(go.Scatter3d(
+        x=[x_vals[0]],
+        y=[y_vals[0]],
+        z=[z_vals[0]],
+        mode="markers",
+        marker=dict(size=8, color="blue")
+    ))
+
+    fig.frames = frames
+
+    # =========================
+    # Layout (unchanged except camera improvement)
+    # =========================
+    fig.update_layout(
+        scene=dict(
+            xaxis=dict(title="Lane width (m)", range=[0, lane_width]),
+            yaxis=dict(title="Lane length (m)", range=[0, lane_length]),
+            zaxis=dict(title="Height (m)", range=[0, 0.15]),
+            aspectmode="data",
+            camera=dict(
+                eye=dict(x=1.8, y=-2.5, z=1.2),
+                center=dict(x=0, y=0, z=0)
+            )
+        ),
+        updatemenus=[dict(
+            type="buttons",
+            buttons=[
+                dict(
+                    label="Play",
+                    method="animate",
+                    args=[None, {
+                        "frame": {"duration": 30, "redraw": True},
+                        "fromcurrent": True
+                    }]
+                )
+            ]
+        )]
+    )
+
+    fig.show()

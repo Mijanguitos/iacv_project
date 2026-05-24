@@ -10,6 +10,7 @@ from rectification.lane_rectification import rectify_bowling_lane
 from utils.plot_utils import plot_lane_boundaries, plot_points
 from utils.utils import load_config, load_json, obtain_corners_from_image
 from utils.video_utils import (
+    create_3d_bowling_visualization,
     generate_trajectory_video_with_board,
 )
 
@@ -63,7 +64,7 @@ def main():
     rectified, H = rectify_bowling_lane(
         image=frame,
         src_points=lane_borders,
-        pixels_per_meter=120,
+        pixels_per_meter=100,
         output_path=config.paths.output_rectified_lane_path,
     )
 
@@ -138,6 +139,27 @@ def main():
         point_radius=config.plotting.point_radius,
         board_margin=config.plotting.board_margin,
     )
+
+
+
+    # 3D Reconstruction and Visualization
+
+    rectified_contact_points = rectified_inter_points_contact.reshape(-1, 2)
+
+    trajectory_3d = []
+    ball_radius_m = 0.10915  # Bowling ball radius in meters
+    for i, (frame_id, (x_metric, y_metric)) in enumerate(zip(f, rectified_contact_points)):
+        r = ball_radius_m  # radius aligned by index
+
+        # Lift into 3D (lane plane is Z=0)
+        X = float(x_metric)
+        Y = float(y_metric)
+        Z = float(r)
+
+        trajectory_3d.append((frame_id, X, Y, Z))
+
+    
+    create_3d_bowling_visualization(trajectory_3d, lane_width=1.066, lane_length=18.29)
 
 
 if __name__ == "__main__":

@@ -22,25 +22,25 @@ os.makedirs(LINES_DIR, exist_ok=True)
 os.makedirs(BEST_DIR, exist_ok=True)
 
 
-def get_vid_lane_boundaries(vid):
-    lane_boundaries = []
-    ret, frame = vid.read()
-    while ret:
-        frame_lane_boundaries = get_frame_lane_boundaries(frame)
-        lane_boundaries.append(frame_lane_boundaries)
-        ret, frame = vid.read()
-    return lane_boundaries
+# def get_vid_lane_boundaries(vid):
+#     lane_boundaries = []
+#     ret, frame = vid.read()
+#     while ret:
+#         frame_lane_boundaries = get_frame_lane_boundaries(frame)
+#         lane_boundaries.append(frame_lane_boundaries)
+#         ret, frame = vid.read()
+#     return lane_boundaries
 
 
-def get_frame_lane_boundaries(frame):
-    # Implementation for detecting lane boundaries in a single frame
-    top = get_top_lane_boundary(frame)
-    bottom = get_bottom_lane_boundary(
-        frame, edge_threshold=30, edge_method="sobel", conv_method="r_g_minus_b"
-    )
-    # left, right = get_lateral_lane_boundaries(frame)
-    # return top, bottom, left, right
-    return top, bottom
+# def get_frame_lane_boundaries(frame):
+#     # Implementation for detecting lane boundaries in a single frame
+#     top = get_top_lane_boundary(frame)
+#     bottom = get_bottom_lane_boundary(
+#         frame, edge_threshold=30, edge_method="sobel", conv_method="r_g_minus_b"
+#     )
+#     # left, right = get_lateral_lane_boundaries(frame)
+#     # return top, bottom, left, right
+#     return top, bottom
 
 
 def preprocess_frame(frame, conv_method="r_g_minus_b", blur_kernel=(5, 5)):
