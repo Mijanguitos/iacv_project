@@ -195,7 +195,7 @@ def create_3d_bowling_visualization(
 
     for frame_id, x, y, z in trajectory_3d:
         x_vals.append(x / 100)  # meters
-        y_vals.append(y / 100)  # meters
+        y_vals.append(lane_length - y / 100)  # meters
         z_vals.append(z)        # meters (already correct)
 
     x_vals = np.array(x_vals)
