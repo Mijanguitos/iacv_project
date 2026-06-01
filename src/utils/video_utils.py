@@ -6,6 +6,8 @@ import numpy as np
 
 Point = Tuple[int, int, int]
 Point2D = Tuple[float, float]
+import plotly.graph_objects as go
+
 
 
 def _normalize_trajectory_points(points: Sequence[Point]) -> list[Point]:
@@ -177,3 +179,209 @@ def generate_trajectory_video_with_board(
 
 
 
+
+def create_3d_bowling_visualization(
+    trajectory_3d,
+    lane_width=1.066,
+    lane_length=18.29
+):
+    """
+    trajectory_3d: list of (frame_id, x, y, z)
+    x, y assumed in cm -> converted to meters
+    z already in meters
+    """
+
+    if len(trajectory_3d) == 0:
+        raise ValueError("trajectory_3d is empty")
+
+    # =========================
+    # Sort trajectory
+    # =========================
+    trajectory_3d = sorted(trajectory_3d, key=lambda p: p[0])
+
+    x_vals, y_vals, z_vals = [], [], []
+
+    for _, x, y, z in trajectory_3d:
+        x_vals.append(x / 100.0)
+        y_vals.append(lane_length - y / 100.0)
+        z_vals.append(z)
+
+    x_vals = np.array(x_vals)
+    y_vals = np.array(y_vals)
+    z_vals = np.array(z_vals)
+
+    fig = go.Figure()
+
+    # =========================
+    # Lane surface (visual + reference)
+    # =========================
+    nx, ny = 25, 120
+    xg = np.linspace(0, lane_width, nx)
+    yg = np.linspace(0, lane_length, ny)
+    xg, yg = np.meshgrid(xg, yg)
+    zg = np.zeros_like(xg)
+
+    texture = np.sin(xg * 18) + np.cos(yg * 2)
+
+    fig.add_trace(go.Surface(
+        x=xg,
+        y=yg,
+        z=zg,
+        surfacecolor=texture,
+        colorscale="Viridis",
+        opacity=0.35,
+        showscale=False,
+        name="Lane"
+    ))
+
+    # =========================
+    # Origin
+    # =========================
+    fig.add_trace(go.Scatter3d(
+        x=[0], y=[0], z=[0],
+        mode="markers+text",
+        marker=dict(size=6, color="black"),
+        text=["Origin"],
+        textposition="top center",
+        name="Origin"
+    ))
+
+    # =========================
+    # Axes
+    # =========================
+    fig.add_trace(go.Scatter3d(
+        x=[0, lane_width],
+        y=[0, 0],
+        z=[0, 0],
+        mode="lines",
+        line=dict(color="blue", width=4),
+        name="X axis"
+    ))
+
+    fig.add_trace(go.Scatter3d(
+        x=[0, 0],
+        y=[0, lane_length],
+        z=[0, 0],
+        mode="lines",
+        line=dict(color="green", width=4),
+        name="Y axis"
+    ))
+
+    fig.add_trace(go.Scatter3d(
+        x=[0, 0],
+        y=[0, 0],
+        z=[0, 0.15],
+        mode="lines",
+        line=dict(color="red", width=4),
+        name="Z axis"
+    ))
+
+    # =========================
+    # Trajectory line
+    # =========================
+    fig.add_trace(go.Scatter3d(
+        x=x_vals,
+        y=y_vals,
+        z=z_vals,
+        mode="lines",
+        line=dict(color="red", width=5),
+        name="Trajectory"
+    ))
+
+    # =========================
+    # REAL SPHERE BALL
+    # =========================
+    BALL_RADIUS = 0.10915  # meters
+
+    def make_sphere(xc, yc, zc, r, resolution=12):
+        u = np.linspace(0, 2 * np.pi, resolution)
+        v = np.linspace(0, np.pi, resolution)
+
+        xs = r * np.outer(np.cos(u), np.sin(v)) + xc
+        ys = r * np.outer(np.sin(u), np.sin(v)) + yc
+        zs = r * np.outer(np.ones_like(u), np.cos(v)) + zc
+
+        return xs, ys, zs
+
+    xs, ys, zs = make_sphere(
+        x_vals[0],
+        y_vals[0],
+        z_vals[0],
+        BALL_RADIUS
+    )
+
+    ball_trace = go.Surface(
+        x=xs,
+        y=ys,
+        z=zs,
+        colorscale=[[0, "blue"], [1, "blue"]],
+        showscale=False,
+        name="Ball"
+    )
+
+    fig.add_trace(ball_trace)
+    ball_index = len(fig.data) - 1
+
+    # =========================
+    # Animation frames (move sphere)
+    # =========================
+    frames = []
+
+    for i in range(len(x_vals)):
+        xs, ys, zs = make_sphere(
+            x_vals[i],
+            y_vals[i],
+            z_vals[i],
+            BALL_RADIUS
+        )
+
+        frames.append(go.Frame(
+            data=[
+                go.Surface(
+                    x=xs,
+                    y=ys,
+                    z=zs,
+                    colorscale=[[0, "blue"], [1, "blue"]],
+                    showscale=False
+                )
+            ],
+            name=str(i),
+            traces=[ball_index]
+        ))
+
+    fig.frames = frames
+
+    # =========================
+    # Layout
+    # =========================
+    fig.update_layout(
+        scene=dict(
+            xaxis=dict(title="Lane width (m)", range=[0, lane_width]),
+            yaxis=dict(title="Lane length (m)", range=[0, lane_length]),
+            zaxis=dict(title="Height (m)", range=[0, 0.3]),
+            aspectmode="data",
+            camera=dict(
+                eye=dict(x=1.8, y=-2.5, z=1.2),
+                center=dict(x=0, y=0, z=0)
+            )
+        ),
+        updatemenus=[dict(
+            type="buttons",
+            buttons=[
+                dict(
+                    label="Play",
+                    method="animate",
+                    args=[
+                        None,
+                        {
+                            "frame": {"duration": 30, "redraw": True},
+                            "fromcurrent": True,
+                            "mode": "immediate"
+                        }
+                    ]
+                )
+            ]
+        )]
+    )
+
+    fig.show()
