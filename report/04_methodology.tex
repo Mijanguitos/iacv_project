@@ -1,88 +1,99 @@
 \section{Methodology}
 
+
 \subsection{Lane Detection}
-Lane Detection
 
 Lane detection constitutes a fundamental component of the proposed bowling analysis pipeline. Unlike traditional autonomous driving applications, where lane detection is primarily used for navigation, in this work it serves two main purposes: restricting the search region for bowling ball detection and estimating the lane geometry required for perspective rectification. By estimating the lane boundaries, a planar homography can be computed to rectify the image plane into a top-down representation of the bowling lane. This rectification, combined with the assumption that the bowling ball remains in contact with the lane surface and preserves a constant radius, enables the estimation of the ball trajectory in three-dimensional space.
+
 Bowling lane detection presents several challenges, including varying illumination conditions, strong perspective effects, the presence of multiple adjacent lanes with similar geometric structures, and partial occlusions caused by bowling pins. Furthermore, not all lane boundaries exhibit the same visual characteristics. While some borders appear as strong visible edges, others are partially occluded or difficult to identify directly. For this reason, a boundary-specific detection strategy was adopted, where each lane border is estimated using a tailored approach while maintaining a shared preprocessing pipeline.
 Since the camera remains fixed throughout each bowling recording, the lane geometry is assumed to remain constant across frames. Consequently, lane boundaries are estimated only once using the first frame of the video, and the resulting geometric configuration is reused for the subsequent rectification and trajectory reconstruction stages. This assumption substantially reduces computational cost, since the camera remains fixed throughout the recording.
+
 The proposed lane detection framework consists of three main stages: image preprocessing, edge extraction, and geometric line estimation. Standard preprocessing operations, including color space transformation and Gaussian smoothing, are first applied to enhance relevant structural information and suppress noise. Subsequently, edge detection and Hough-based line extraction are employed, with specialized heuristics introduced depending on the boundary being estimated.
 
 
 
 
-Single-channel image transformation
-Since edge detection methods operate on single-channel intensity images, an initial transformation from the RGB image space \mathbb{R}^{n\times m\times3} to a single-channel representation \mathbb{R}^{n\times m}is required. The effectiveness of this transformation directly affects the separability of lane boundaries from the surrounding scene, influencing both edge detection robustness and the sensitivity of subsequent line extraction methods.
+\subsubsection{Single-channel image transformation}
+Since edge detection methods operate on single-channel intensity images, an initial transformation from the RGB image space $\mathbb{R}^{n\times m\times 3}$ to a single-channel representation $\mathbb{R}^{n\times m}$ is required. The effectiveness of this transformation directly affects the separability of lane boundaries from the surrounding scene, influencing both edge detection robustness and the sensitivity of subsequent line extraction methods.
 The objective of this stage is to maximize the contrast between relevant lane structures and the background while minimizing the effect of illumination variability across videos. Bowling recordings may differ considerably in lighting conditions, reflections on the lane surface, and camera exposure settings, making the choice of transformation particularly important.
-As a baseline, the standard grayscale conversion was evaluated conversion [Cita opencv, cita libro]. This transformation computes a weighted combination of the RGB channels according to perceptual luminance:
-Y=0.299R+0.587G+0.114B
+As a baseline, the standard grayscale conversion was evaluated conversion \cite{opencv_color_conversion,gonzalez2008digital}  . This transformation computes a weighted combination of the RGB channels according to perceptual luminance:
+
+\begin{equation}
+Y = 0.299\,R + 0.587\,G + 0.114\,B
+\end{equation}
 
 
+where R, G, and B represent the red, green, and blue image channels, respectively. Although widely used in computer vision applications, this conversion does not explicitly enhance lane-related structures and may be sensitive to reflections and illumination changes.
 
-where R, G, and Brepresent the red, green, and blue image channels, respectively. Although widely used in computer vision applications, this conversion does not explicitly enhance lane-related structures and may be sensitive to reflections and illumination changes.
+Additionally, a color transformation inspired by lane detection approaches in the autonomous driving domain was explored \cite{WU20142756}. Specifically, the R+G-B transformation (commonly referred to as rgminusb) was considered:
+\begin{equation}
+I = R + G - B
+\end{equation}
 
-Additionally, a color transformation inspired by lane detection approaches in the autonomous driving domain was explored. Specifically, the R+G-Btransformation (commonly referred to as rgminusb) was considered:
-I=R+G-B
 This transformation increases the contrast between bright lane markings and darker surfaces by emphasizing red and green channel intensities while suppressing the blue channel. In the context of bowling lanes, where wooden surfaces and lane markings often present distinct chromatic responses, this representation proved particularly effective at highlighting relevant boundaries.
 
 To further improve robustness against illumination changes, Principal Component Analysis (PCA) was also investigated as an alternative transformation strategy. In this approach, the RGB channels are projected into a lower-dimensional representation, retaining only the first principal component, which captures the largest variance in the image. Since structural lane features often dominate the variance distribution, this transformation can enhance boundary visibility under challenging lighting conditions.
+
 Finally, transformations based on the HSV color space were considered, motivated by the observation that lane boundaries may exhibit stronger separability in chromatic information than in raw intensity values. In particular, the hue component was evaluated as a potential representation for emphasizing boundary transitions.
-After empirical evaluation across multiple bowling videos, the R+G-B transformation yielded the most consistent performance for the detection of visible lane boundaries and was therefore selected as the default preprocessing step in the proposed pipeline.
+
+After empirical evaluation across multiple bowling videos, the $R+G-B$ transformation yielded the most consistent performance for the detection of visible lane boundaries and was therefore selected as the default preprocessing step in the proposed pipeline.
 
 
-Image smoothing
+\subsubsection{Image smoothing}
 Before edge detection, Gaussian blurring is applied to reduce high-frequency noise and suppress small intensity variations that may generate false edge responses. In bowling lane imagery, reflections on the lane surface and texture variations can introduce spurious gradients that negatively affect boundary detection.
-A Gaussian filter with kernel size 5\times5 is applied to the single-channel transformed image. This preprocessing step improves the stability of subsequent edge detection methods while preserving the dominant structural information of the lane boundaries.
+A Gaussian filter with kernel size $5\times 5$ is applied to the single-channel transformed image. This preprocessing step improves the stability of subsequent edge detection methods while preserving the dominant structural information of the lane boundaries.
 
 
 
-Edge detection
+\subsubsection{Edge detection}
 After image smoothing, edge detection is applied to extract candidate structures corresponding to lane boundaries. Three classical gradient-based and intensity-based methods were evaluated: Sobel, Canny, and Laplacian filters. These methods differ in how they estimate intensity discontinuities and in their sensitivity to noise and texture variations.
+
 The Sobel operator computes first-order image gradients and is used to approximate horizontal and vertical intensity changes. It is particularly useful for emphasizing directional structures, making it suitable for detecting lane boundaries with a strong geometric orientation.
+
 The Canny detector follows a multi-stage process involving gradient computation, non-maximum suppression, and hysteresis thresholding. This approach typically produces thinner and more connected edges, but its performance is sensitive to threshold selection and illumination variability.
+
 The Laplacian operator is a second-order derivative method that detects regions of rapid intensity change regardless of direction. While it can highlight fine structures, it is also more sensitive to noise and may produce fragmented edge maps in low-contrast regions.
 All three methods were implemented and evaluated across multiple bowling videos. Based on qualitative performance and stability of the resulting edge maps, the Sobel operator was selected as the primary edge detector for the proposed pipeline. Depending on the boundary being estimated, the gradient direction is adapted to emphasize either horizontal or vertical structures, improving the extraction of relevant lane edges prior to line fitting.
 
-Line extraction using the Hough transform
+\subsubsection{Line extraction using the Hough transform}
 Following edge detection, candidate line segments corresponding to lane boundaries are extracted using the probabilistic Hough transform. The Hough transform is particularly suitable for lane detection tasks, as it enables robust identification of line structures even when edges are fragmented or partially incomplete. The method operates by mapping edge points from the image space into a parametric representation of lines. Since infinitely many lines may pass through a given image point, each edge pixel votes for all compatible line hypotheses in the parameter space. Line candidates receiving strong consensus from multiple edge points accumulate higher votes and are identified as probable geometric structures.
-In this work, the probabilistic Hough transform (HoughLinesP) is employed. Unlike the standard Hough transform, which returns infinite lines represented in polar form ρθ, the probabilistic formulation directly estimates finite line segments defined by their endpoints x1y1x2y2. This representation is particularly advantageous for the proposed pipeline, as subsequent processing relies on geometric properties such as segment orientation, intersections, and proximity to expected lane locations. Additionally, the probabilistic formulation reduces computational cost by operating on a subset of edge points while maintaining robust detection performance.
+In this work, the probabilistic Hough transform (HoughLinesP) is employed. Unlike the standard Hough transform, which returns infinite lines represented in polar form $(\rho,\theta)$, the probabilistic formulation directly estimates finite line segments defined by their endpoints $(x_1, y_1, x_2, y_2)$. This representation is particularly advantageous for the proposed pipeline, as subsequent processing relies on geometric properties such as segment orientation, intersections, and proximity to expected lane locations. Additionally, the probabilistic formulation reduces computational cost by operating on a subset of edge points while maintaining robust detection performance.
 The resulting line candidates are further filtered according to geometric constraints consistent with the expected lane structure. In particular, line orientation is used to reject candidates that deviate substantially from the expected direction of the corresponding lane boundary. Since multiple plausible line hypotheses may still remain, additional boundary-specific heuristics are introduced in later stages of the pipeline to determine the final lane borders.
-The Hough transform thus serves as an intermediate representation that converts pixel-level edge responses into structured geometric primitives, enabling more robust boundary estimation in subsequent stages.
 
-Bottom boundary detection
+
+\subsubsection{Bottom boundary detection}
 The bottom boundary of the bowling lane corresponds to the nearest and most visually distinctive lane edge in the scene. Unlike other lane borders, this boundary is typically less affected by occlusion and exhibits a strong horizontal structure, making it the most reliable reference for initial lane geometry estimation.
 To improve robustness and reduce interference from irrelevant scene content, a spatial cropping is first applied to focus on the lower-central region of the frame, where the bottom boundary is expected to appear. This restriction reduces noise from distant lane regions and peripheral elements.
 The cropped region is then converted into a single-channel representation and smoothed using Gaussian filtering. Edge detection is performed using a Sobel operator configured to emphasize horizontal intensity changes, which are most consistent with the orientation of the bottom lane boundary.
 After edge extraction, the probabilistic Hough transform is applied to identify candidate line segments. Since multiple line hypotheses may be generated due to reflections and lane texture, the resulting segments are filtered based on geometric constraints. In particular, only lines with slopes within a predefined threshold are retained, ensuring consistency with the expected near-horizontal orientation of the bottom boundary.
 Among the remaining candidates, the most stable line is selected as the bottom boundary estimate. 
 
-Lateral boundary detection
+\subsubsection{Lateral boundary detection}
 The lateral boundaries of the bowling lane present a significantly more challenging detection problem compared to the bottom boundary. Unlike the single dominant horizontal edge observed at the bottom of the lane, the lateral region contains multiple parallel lane markings across adjacent lanes. This introduces ambiguity, as several valid line candidates may be detected in the image, and the correct pair of boundaries depends on the specific lane being analyzed.
 To address this, the same preprocessing pipeline is applied, consisting of single-channel transformation, Gaussian smoothing, and edge detection using a Sobel operator configured to emphasize vertical structures. Unlike the bottom boundary case, no spatial cropping is applied, as relevant lane structures may extend across a larger portion of the frame.
+
 After edge extraction, the probabilistic Hough transform is used to obtain candidate line segments. A preliminary geometric filter is applied to discard near-horizontal segments, ensuring that only approximately vertical structures are retained.
 Since multiple valid vertical line hypotheses typically remain, an additional selection strategy is required. To disambiguate between adjacent lanes, a reference point within the target lane is introduced. In this work, the image center is used as a default reference under the assumption that the central lane is the target of interest. However, this point can be modified to track alternative lanes if required.
 A horizontal line passing through this reference point is then considered, and intersections between this line and all detected line candidates are computed. Each candidate line is evaluated based on the horizontal distance between its intersection point and the reference point. The left and right lane boundaries are selected as the closest valid lines on each side of the reference point, respectively.
 This heuristic effectively resolves the ambiguity introduced by multiple parallel lane structures by converting the problem into a geometric proximity selection task in one dimension. 
 
 
-Top boundary detection
+\subsubsection{Top boundary detection}
 The top boundary of the bowling lane presents a fundamentally different challenge compared to the other lane borders, as it is frequently occluded by bowling pins. This occlusion breaks the continuity of the lane marking and makes classical edge-based or line-based methods such as the Hough transform unreliable. Additionally, feature-based approaches such as SIFT were considered but found to be ineffective due to the small size of the pins in the image and the limited number of stable keypoints they generate at the typical camera distance.
+
 To address these limitations, a template matching-based approach is adopted, leveraging prior knowledge of the approximate appearance and scale of bowling pins. The method searches for occurrences of a pin template within the upper region of the frame, where pins are expected to appear.
 Since the apparent size of pins varies across videos due to perspective and camera distance, a multi-scale search strategy is applied. The template is resized across a range of scales, and matching is performed at each scale independently. This increases robustness to variations in pin size and improves detection consistency across different recordings.
+
 After matching, multiple overlapping detections are typically produced for the same physical pin. To remove redundant detections, non-maximum suppression is applied, retaining only the most confident bounding boxes. From each remaining detection, representative keypoints are extracted, corresponding either to the center or the lower portion of the bounding box, depending on the selected configuration.
+
 Given that template matching can still produce false positives in visually similar regions, a robust geometric fitting stage is applied. The extracted keypoints are first filtered using RANSAC regression to remove outliers. A final first-order polynomial is then fitted to the inlier points using least squares, resulting in a continuous estimate of the top lane boundary.
 
-Lane boundary integration and corner estimation
+\subsubsection{Lane boundary integration and corner estimation}
 Once the bottom, lateral, and top lane boundaries are estimated independently, they are combined to recover a consistent geometric representation of the bowling lane. Since each boundary is represented as a line segment in image space, the lane corners can be obtained by computing the pairwise intersections between adjacent boundaries.
+
 Specifically, the bottom and top boundaries are intersected with the left and right lateral boundaries to obtain the four lane corners: bottom-left, bottom-right, top-right, and top-left. These intersection points define a quadrilateral that approximates the perspective projection of the bowling lane in the image.
 
 
-References
-Lane dimensions: [https://starsandstrikes.com/how-long-is-a-bowling-lane-and-other-bowling-stats-2/]
-Ball dimensions: [https://www.dimensions.com/element/bowling-ball-ten-pin]
-
-Color conversion: [https://docs.opencv.org/3.4/de/d25/imgproc_color_conversions.html]
-Color conversion: [https://cl72.org/090imagePLib/books/Gonzales,Woods-Digital%20Image%20Processing%203rd%20ed.pdf]
 
 
 \subsection{Ball Dynamics Tracking}
@@ -91,21 +102,26 @@ Color conversion: [https://cl72.org/090imagePLib/books/Gonzales,Woods-Digital%20
 
 \subsubsection{Spin Detection}
 
-\subsection{3D Reconstruction}
-Lane rectification and 3D Reconstruction
+\subsection{Lane rectification and 3D Reconstruction}
+
 Once both lane geometry and ball trajectory have been estimated in the image plane, the next step consists of transforming the scene into a physically meaningful coordinate system aligned with the real-world dimensions of the bowling lane. Due to perspective distortion, measurements in the image space are not directly interpretable in metric terms. For this reason, a perspective rectification is performed using a homography grounded in the known geometry of the lane.
-Homography-based lane rectification
-Given the four lane corner points obtained from the intersection of the estimated boundaries, a planar homography is computed to map points from the image plane to a top-down representation of the bowling lane. Unlike a generic projective transformation, this mapping is constrained by the known physical dimensions of a standard bowling lane, namely a width of 1.066\mathrm{\thinsp}mand a length of 18.29\mathrm{\thinsp}m.
+\subsubsection{Homography-based lane rectification}
+Given the four lane corner points obtained from the intersection of the estimated boundaries, a planar homography is computed to map points from the image plane to a top-down representation of the bowling lane. Unlike a generic projective transformation, this mapping is constrained by the known physical dimensions of a standard bowling lane, namely a width of 1.066~m and a length of 18.29~m \cite{lane_dimensions}.
 The destination coordinate system is defined directly in metric units, such that the rectified plane corresponds to a physically scaled representation of the lane surface. This establishes a direct correspondence between image coordinates and real-world measurements.
-The homography His estimated such that:
-\mathbf{x}_{metric}=H\mathbf{x}_{image}
-where \mathbf{x}_{metric}lies in a metric coordinate system expressed in meters.
+The homography H is estimated such that:
+\[\mathbf{x}_{\mathrm{metric}} = H\,\mathbf{x}_{\mathrm{image}}\]
+where $\mathbf{x}_{\mathrm{metric}}$ lies in a metric coordinate system expressed in meters.
 As a result, the rectified output represents the lane in a perspective-corrected and metrically scaled coordinate system.
 
 
-Ball trajectory transformation and 3D reconstruction
+\subsubsection{Ball trajectory transformation and 3D reconstruction}
 The reconstructed trajectory is obtained through a sequence of geometric transformations that map image-space detections into a 3D representation expressed in the coordinate system of the bowling lane.
+
 First, the ball center is detected in the image plane as a sequence of positions over time, together with the corresponding estimated radii. The ball-lane contact point is then computed under the assumption that the ball remains in continuous contact with the lane surface, by correcting the detected center using the estimated radius along the vertical image axis.
+
 These contact points are projected into the metric lane coordinate system using the previously computed homography, which is defined from the known physical dimensions of the lane. This yields a 2D trajectory expressed in real-world units on the lane plane.
+
 Finally, a 3D representation of the motion is obtained by lifting the contact trajectory along the vertical axis by a distance equal to the ball radius, resulting in a set of 3D coordinates expressed in the lane reference frame.
-The final output of this stage is the trajectory of the ball expressed in the 3D coordinate system of the lane. The resulting representation is consistent with both the geometric constraints of the lane and the physical dimensions of the ball.
+
+The final output of this stage is the trajectory of the ball expressed in the 3D coordinate system of the lane. The resulting representation is consistent with both the geometric constraints of the lane and the physical dimensions of the ball \cite{ball_dimensions}.
+
