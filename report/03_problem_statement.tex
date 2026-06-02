@@ -1,3 +1,34 @@
-\section{Problem Statement}
+\section{Problem Formulation and Motivation}
+\subsection{Problem Statement}
+The primary objective of this project is to estimate the 3D trajectory and spin dynamics of a bowling ball from a static monocular video feed for advanced sports analysis. Because intrinsic camera parameters are not provided, the system must rely on projective geometry and physical constraints.
+
+To achieve a robust and accurate estimation, the problem is formulated as a structured computer vision pipeline consisting of five interdependent tasks:
+
+\begin{enumerate}
+    \item \textbf{Lane Detection:} Identifying the physical boundaries of the playing surface within the image plane, despite perspective distortion and object occlusion.
+    
+    \item \textbf{Planar Metric Rectification:} Utilizing the detected lane boundaries to compute a planar homography matrix, mapping the perspective-distorted image space to a metric, 2D bird's-eye view.
+    
+    \item \textbf{Ball Detection and Tracking:} Isolating the bowling ball across consecutive frames and applying temporal interpolation to generate a continuous, robust 2D trajectory from discrete, raw center coordinates.
+    
+    \item \textbf{3D Trajectory Estimation:} Lifting the 2D tracking data into 3D spatial coordinates by enforcing two geometric constraints: the ball maintains constant contact with the rectified lane plane, and it possesses a known, fixed physical radius.
+    
+    \item \textbf{Spin Calculation:} Analyzing the rotational displacement of surface features on the ball to estimate its spin rate, a critical parameter in bowling performance.
+\end{enumerate}
+
+\subsection{Motivation and Relevance}
+
+In modern sports analytics, precise metrics such as ball speed, entry angle, trajectory curvature, and spin rate are fundamental for player evaluation. In bowling, the interaction between the ball's spin and the lane's oil pattern dictates the success of a shot.
+
+Commercial systems capable of extracting these metrics typically rely on complex, synchronized multi-camera stereoscopic setups or specialized sensor arrays that are highly cost-prohibitive. Developing a solution that extracts both robust 3D trajectory and spin parameters from a single, uncalibrated static camera democratizes access to professional-grade analytics. It demonstrates the efficacy of combining modern object tracking with classic geometric priors to extract deep metric insights from standard video footage.
 
 \subsection{State of the Art}
+\subsubsection{Lane Detection and Metric Rectification}
+The foundational techniques for boundary extraction are heavily derived from Advanced Driver Assistance Systems (ADAS). Standard pipelines in dynamic environments rely on localized gradient filters (such as the Sobel or Canny operators) and the Hough Transform to extract linear boundaries \cite{DBLP:journals/corr/Aly14}
+
+However, translating pixel-space detections into metric measurements traditionally requires full camera calibration \cite{888718}. In structured sports environments, where the playing surface is guaranteed to be a flat plane and the camera is static, the state of the art often bypasses explicit calibration in favor of Planar Homography  \cite {Hartley_Zisserman_2004}. By identifying four coplanar control points with known real-world dimensions (such as the corners of a tennis court or bowling lane), a homography matrix can be computed to rectify the image, providing a highly accurate metric mapping of the surface \cite{YU2009643}.
+
+\subsubsection{Ball Tracking, Trajectory Estimation, and Spin}
+Tracking fast-moving sports balls is challenging due to motion blur, occlusion, and background clutter. Modern solutions frequently utilize deep learning frameworks (e.g., TrackNet) or background subtraction to isolate the ball \cite{huang2019tracknetdeeplearningnetwork}. To transition from 2D pixel tracking to 3D spatial estimation without depth sensors, domain-specific applications enforce physical priors. By leveraging the geometric constraint that a rigid sphere maintains contact with a known ground plane, the object's spatial coordinates can be robustly estimated \cite{6115930}. 
+Furthermore, estimating spin from a monocular feed is notoriously difficult. State-of-the-art approaches typically involve analyzing the frame-by-frame displacement of surface textures (such as finger holes, logos, or dotted patterns) using feature-matching algorithms, template matching, or optical flow \cite{gossard2024tabletennisballspin} (AGREGAR CITAS OPTICAL FLOW)
+. Recent studies have even explored event-based cameras to capture ultra-fast spin dynamics \cite{10678117}, though adapting texture-based tracking for standard frame-rate cameras remains the primary method for accessible sports analytics.
