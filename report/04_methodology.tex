@@ -15,28 +15,35 @@ The proposed lane detection framework consists of three main stages: image prepr
 
 \subsubsection{Single-channel image transformation}
 Since edge detection methods operate on single-channel intensity images, an initial transformation from the RGB image space $\mathbb{R}^{n\times m\times 3}$ to a single-channel representation $\mathbb{R}^{n\times m}$ is required. The effectiveness of this transformation directly affects the separability of lane boundaries from the surrounding scene, influencing both edge detection robustness and the sensitivity of subsequent line extraction methods.
+
 The objective of this stage is to maximize the contrast between relevant lane structures and the background while minimizing the effect of illumination variability across videos. Bowling recordings may differ considerably in lighting conditions, reflections on the lane surface, and camera exposure settings, making the choice of transformation particularly important.
-As a baseline, the standard grayscale conversion was evaluated conversion \cite{opencv_color_conversion,gonzalez2008digital}  . This transformation computes a weighted combination of the RGB channels according to perceptual luminance:
+
+To identify the optimal preprocessing step, several distinct single-channel conversion methods were evaluated.
+
+As a baseline, the standard OpenCV grayscale conversion was tested, which computes a weighted combination of the RGB channels according to perceptual luminance \cite{opencv_color_conversion,gonzalez2008digital}  
 
 \begin{equation}
 Y = 0.299\,R + 0.587\,G + 0.114\,B
 \end{equation}
 
+where R, G, and B represent the red, green, and blue image channels, respectively.
 
-where R, G, and B represent the red, green, and blue image channels, respectively. Although widely used in computer vision applications, this conversion does not explicitly enhance lane-related structures and may be sensitive to reflections and illumination changes.
+An alternative standard structural representation, lightness, was also tested to observe if averaging the maximum and minimum color components provided better separability for the lane textures. The lightness channel from the HLS color space is mathematically defined as:
+$$L = \frac{\max(R, G, B) + \min(R, G, B)}{2}$$
 
-Additionally, a color transformation inspired by lane detection approaches in the autonomous driving domain was explored \cite{WU20142756}. Specifically, the R+G-B transformation (commonly referred to as rgminusb) was considered:
+Beyond standard conversions, domain-specific approaches were explored. A color transformation inspired by lane detection approaches in the autonomous driving domain \cite{WU20142756}, calculated as
+
 \begin{equation}
 I = R + G - B
 \end{equation}
 
-This transformation increases the contrast between bright lane markings and darker surfaces by emphasizing red and green channel intensities while suppressing the blue channel. In the context of bowling lanes, where wooden surfaces and lane markings often present distinct chromatic responses, this representation proved particularly effective at highlighting relevant boundaries.
+was evaluated. This transformation emphasizes red and green channel intensities while suppressing the blue channel, theoretically increasing the contrast between bright lane markings and darker road-like surfaces.
 
-To further improve robustness against illumination changes, Principal Component Analysis (PCA) was also investigated as an alternative transformation strategy. In this approach, the RGB channels are projected into a lower-dimensional representation, retaining only the first principal component, which captures the largest variance in the image. Since structural lane features often dominate the variance distribution, this transformation can enhance boundary visibility under challenging lighting conditions.
+To further improve robustness against illumination changes, Principal Component Analysis (PCA) was applied. By projecting the RGB channels into a lower-dimensional space and retaining only the first principal component, this method aims to isolate the dominant structural features of the lane regardless of specific lighting conditions.
 
-Finally, transformations based on the HSV color space were considered, motivated by the observation that lane boundaries may exhibit stronger separability in chromatic information than in raw intensity values. In particular, the hue component was evaluated as a potential representation for emphasizing boundary transitions.
+Finally, to assess whether boundary transitions could be isolated strictly through chromaticity rather than intensity, the hue channel from the HSV color space was evaluated.
 
-After empirical evaluation across multiple bowling videos, the $R+G-B$ transformation yielded the most consistent performance for the detection of visible lane boundaries and was therefore selected as the default preprocessing step in the proposed pipeline.
+To determine the most robust approach for the final pipeline, the five single-channel transformations were systematically evaluated against various edge detectors (Sobel, Canny, and Laplacian) to measure their impact on boundary localization. Preliminary evaluations indicated that the default grayscale conversion, when paired with a Sobel filter, provided the most robust and consistent boundary localization across the varying illumination conditions of the dataset. The detailed quantitative analysis and discussion of this evaluation are presented in RESULTS SECTION(CITAR). Consequently, the default grayscale transformation paired with Sobel edge detection was selected as the foundational preprocessing step for the lane detection architecture.
 
 
 \subsubsection{Image smoothing}

@@ -53,7 +53,7 @@ def get_bottom_lane_boundary(
     frame,
     edge_method="sobel",
     conv_method="pca",
-    edge_threshold=0.3,
+    edge_threshold=30,
     hough_threshold=50,
     hough_min_line_length=100,
     hough_max_line_gap=10,
