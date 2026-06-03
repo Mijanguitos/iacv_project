@@ -123,9 +123,10 @@ def get_bottom_lane_boundary(
 
 def save_candidate_line(frame, line, crop_region, top_left_offset, color, filename):
     vis, _, _ = crop_by_ratio(frame.copy(), crop_region)
-    x1, y1, x2, y2 = get_true_coords(line, crop_region=top_left_offset)
+    x1, y1, x2, y2 = line
     cv2.line(vis, (x1, y1), (x2, y2), color, 3)
     cv2.imwrite(os.path.join(BEST_DIR, filename), vis)
+    x1, y1, x2, y2 = get_true_coords(line, crop_region=top_left_offset)
     return [x1, y1, x2, y2]
 
 
@@ -150,6 +151,8 @@ def get_top_lane_boundary(
             1.5,
             1.75,
             2.0,
+            3.0,
+            5.0,
         ],  # multi-scale to handle perspective
         # threshold=0.85, first vid
         threshold=0.75,

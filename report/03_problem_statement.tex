@@ -32,3 +32,18 @@ However, translating pixel-space detections into metric measurements traditional
 Tracking fast-moving sports balls is challenging due to motion blur, occlusion, and background clutter. Modern solutions frequently utilize deep learning frameworks (e.g., TrackNet) or background subtraction to isolate the ball \cite{huang2019tracknetdeeplearningnetwork}. To transition from 2D pixel tracking to 3D spatial estimation without depth sensors, domain-specific applications enforce physical priors. By leveraging the geometric constraint that a rigid sphere maintains contact with a known ground plane, the object's spatial coordinates can be robustly estimated \cite{6115930}. 
 Furthermore, estimating spin from a monocular feed is notoriously difficult. State-of-the-art approaches typically involve analyzing the frame-by-frame displacement of surface textures (such as finger holes, logos, or dotted patterns) using feature-matching algorithms, template matching, or optical flow \cite{gossard2024tabletennisballspin} (AGREGAR CITAS OPTICAL FLOW)
 . Recent studies have even explored event-based cameras to capture ultra-fast spin dynamics \cite{10678117}, though adapting texture-based tracking for standard frame-rate cameras remains the primary method for accessible sports analytics.
+
+
+
+
+
+\subsection{Solution Approach}
+To transition from a raw monocular video sequence to metric 3D analytics, the proposed solution employs a sequential, decoupled architecture that isolates the structural extraction of the environment from the kinematic tracking of the ball.
+
+The first phase of the pipeline focuses on resolving the spatial geometry of the scene. Due to severe occlusion and the nature of a bowling alley, the playing surface is localized by independently extracting its distinct geometric boundaries (the foul line, the lateral gutters, and the pin deck) using a combination of directional gradient analysis, spatial proximity heuristics, and robust object-centric regression. The intersection of these boundaries yields four coplanar control points in the image plane. By mapping these homogeneous pixel coordinates to the known metric dimensions of a standard bowling lane, a 2D-to-2D planar homography matrix (H) is computed. This mathematical transformation effectively eliminates perspective distortion, providing a rectified, metric bird's-eye view of the playing surface without requiring intrinsic camera calibration.
+
+Following environmental rectification, the second phase isolates the kinematic trajectory of the bowling ball. The ball is tracked across the temporal sequence to extract its raw 2D center coordinates and apparent pixel radius. To mitigate the fragmentation of data caused by fast motion and object occlusion, temporal interpolation is applied to generate a continuous, smooth mathematical curve in the image plane.
+
+To reconstruct the 3D trajectory, the ball's image-plane contact point (found by adding its pixel radius to its vertical center) is projected through the homography matrix to obtain its metric ground coordinates (X, Y). By enforcing the constraint that the ball maintains surface contact with the lane, its known physical radius is simply assigned as the Z-coordinate, yielding the final spatial position (X, Y, R). 
+
+Finally, to provide comprehensive sports analytics, the system evaluates the rotational dynamics of the ball. By tracking the cyclical, frame-by-frame spatial displacement of high-contrast surface textures across the ball's visible hemisphere, the angular velocity is mathematically estimated, yielding the overall spin rate over the course of the trajectory.
