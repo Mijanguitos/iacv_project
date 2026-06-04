@@ -1,4 +1,5 @@
 
+from pathlib import Path
 import numpy as np
 import os
 
@@ -44,12 +45,19 @@ def ball_detection(lane_points: np.ndarray,
 
 if __name__ == "__main__":
 
-    lane_points = np.array([[872, 684], [1228, 696], [1241, 277], [1146, 273]]) # For clip 1
+    #lane_points = np.array([[872, 684], [1228, 696], [1241, 277], [1146, 273]]) # For clip 1
     #lane_points = [[819, 813], [1308, 819] , [1442, 175], [1254, 175]] # For clip 2
+    #lane_points = np.array([[608, 983], [1186, 1016], [1259, 350], [1131, 344]]) # For clip 7
+    lane_points = np.array([[608, 983], [1185, 1016], [1258, 354], [1129, 347]]) # For clip 5
     
-    clip = "clip_1"
-    video_path = f"data\\clips\\{clip}"
-    ball_path = f"src\\ball_detection\\"
+    clip = "clip_5"
+    
+    PROJECT_ROOT = Path().resolve()
+    print(f"Project Root: {PROJECT_ROOT}")
+
+    extension = ".mov"
+    video_path = f"data\\clips\\{clip}{extension}"
+    ball_path = f"{PROJECT_ROOT}\\src\\ball_detection\\"
     preprocessing_path = f"{ball_path}preprocessing_output\\preprocessed_{clip}"
     detection_path = f"{ball_path}detection_output\\candidates_{clip}"
     postprocessing_path = f"{ball_path}postprocessing_output\\postprocessed_{clip}"
