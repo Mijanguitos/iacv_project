@@ -115,7 +115,7 @@ def video_preprocessing(video_path: os.PathLike[str],
     print(f"Ball detection: preprocessing {video_path}")
 
     # Load the video clip and get total number of frames and frame rate
-    CAP = cv2.VideoCapture(f"{video_path}.mp4")                  # Class for video captured from the clip's file   
+    CAP = cv2.VideoCapture(f"{video_path}")                  # Class for video captured from the clip's file   
     n_frames = int(CAP.get(cv2.CAP_PROP_FRAME_COUNT))   # Clip's total number of frames
     fps = CAP.get(cv2.CAP_PROP_FPS)                     # Clip's frame rate
     width  = CAP.get(cv2.CAP_PROP_FRAME_WIDTH)    # float `width`

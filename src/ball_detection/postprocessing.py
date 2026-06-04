@@ -4,6 +4,8 @@ Retrieves the
 
 """
 
+from scipy.interpolate import CubicSpline
+from scipy.ndimage import gaussian_filter1d
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import networkx as nx
@@ -162,6 +164,16 @@ def interpolation(data: np.ndarray, frames: np.ndarray, degree: int) -> np.ndarr
 
     return est_x
 
+def spline_interpolation(data: np.ndarray, frames: np.ndarray) -> np.ndarray:
+    cs = CubicSpline(frames, data, bc_type='natural')
+    f = np.arange(frames[0], frames[-1])
+    est_x = cs(f)
+    return est_x
+
+def gaussian_filter(data: np.ndarray, sigma: float = 5) -> np.ndarray:
+    """ Apply Gaussian filter to the 1D data for smoothing."""
+    return gaussian_filter1d(data, sigma=sigma)
+
 def compute_trajectory(candidates_path: os.PathLike[str],
                        save_path: os.PathLike[str]) -> dict:
     
@@ -183,8 +195,12 @@ def compute_trajectory(candidates_path: os.PathLike[str],
                     "r": r.tolist(),
                     "f": frames.tolist()}
     
-    x_int = interpolation(x, frames, 4)
-    y_int = interpolation(y, frames, 4)
+    #x_int = interpolation(x, frames, 4)
+    x_int = spline_interpolation(x, frames)
+    x_int = gaussian_filter(x_int, sigma=2)
+    #y_int = interpolation(y, frames, 4)
+    y_int = spline_interpolation(y, frames)
+    y_int = gaussian_filter(y_int, sigma=2)
     r_int = interpolation(r, frames, 3)
     f = np.arange(frames[0], frames[-1])
 

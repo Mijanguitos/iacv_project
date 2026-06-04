@@ -1,4 +1,5 @@
 
+from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import cv2
@@ -54,7 +55,7 @@ def frame_detection(concept: str,
     f = trajectory["f"]
 
     # Load the video clip and get total number of frames and frame rate
-    CAP = cv2.VideoCapture(f"{video_path}.mp4")                  # Class for video captured from the clip's file   
+    CAP = cv2.VideoCapture(f"{video_path}")                  # Class for video captured from the clip's file   
     n_frames = int(CAP.get(cv2.CAP_PROP_FRAME_COUNT))   # Clip's total number of frames
     fps = CAP.get(cv2.CAP_PROP_FPS)                     # Clip's frame rate
     width  = CAP.get(cv2.CAP_PROP_FRAME_WIDTH)    # float `width`
@@ -96,9 +97,12 @@ def visualization(trajectory_path: os.PathLike[str],
 
 
 if __name__ == "__main__":
+    PROJECT_ROOT = Path().resolve()
 
-    clip = "clip_2"
-    trajectory_path = f"postprocessing_output\\trajectory_{clip}"
-    save_path = f"visualization_plotting\\{clip}"
+    clip = "clip_7"
+    extension = ".mov"
+    video_path = f"{PROJECT_ROOT}\\data\\clips\\{clip}{extension}"
+    trajectory_path = f"{PROJECT_ROOT}\\src\\ball_detection\\postprocessing_output\\postprocessed_{clip}"
+    save_path = f"{PROJECT_ROOT}\\src\\ball_detection\\visualization_plotting\\{clip}"
 
-    visualization(trajectory_path, clip, save_path)
+    visualization(trajectory_path, video_path, save_path)
