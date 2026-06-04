@@ -1,5 +1,5 @@
 # Fdb version 4
-["bibtex main"] 0 "main.aux" "main.bbl" "main" 1780414912.07231 0
+["bibtex main"] 0 "main.aux" "main.bbl" "main" 1780582337.7945 0
   "D:/Users/mijan/AppData/Local/Programs/MiKTeX/bibtex/bst/bibtex/plain.bst" 1291864736 20613 bd3fbfa9f64872b81ac57a0dd2ed855f ""
   "bibliography.bib" 0 -1 0 ""
   "main.aux" 0 -1 0 "pdflatex"
@@ -7,7 +7,7 @@
   "main.bbl"
   "main.blg"
   (rewritten before read)
-["pdflatex"] 1780414909.34986 "c:/Users/mijan/OneDrive - Politecnico di Milano/Workspaces/Polimi/[IACV] Image Analysis and Computer Vision/Project/iacv_project/report/main.tex" "main.pdf" "main" 1780414912.07336 0
+["pdflatex"] 1780582334.92445 "c:/Users/mijan/OneDrive - Politecnico di Milano/Workspaces/Polimi/[IACV] Image Analysis and Computer Vision/Project/iacv_project/report/main.tex" "main.pdf" "main" 1780582337.79566 0
   "C:/Users/mijan/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map" 1780402842 80909 eab91d9745dd2edfd62a31d53cd5fe15 ""
   "C:/Users/mijan/AppData/Local/MiKTeX/fonts/pk/ljfour/jknappen/ec/dpi600/ecbx0800.pk" 1777547763 19872 14a2b7cb950605176e5b58ddc7ce7b79 ""
   "C:/Users/mijan/AppData/Local/MiKTeX/fonts/pk/ljfour/jknappen/ec/dpi600/ecbx1000.pk" 1777547760 25420 129fa4730ef173653a533baa42311a05 ""
@@ -239,19 +239,22 @@
   "D:/Users/mijan/AppData/Local/Programs/MiKTeX/tex/latex/trimspaces/trimspaces.sty" 1253169183 1380 971a51b00a14503ddf754cab24c3f209 ""
   "D:/Users/mijan/AppData/Local/Programs/MiKTeX/tex/latex/url/url.sty" 1388490452 12796 8edb7d69a20b857904dd0ea757c14ec9 ""
   "D:/Users/mijan/AppData/Local/Programs/MiKTeX/tex/latex/xcolor/xcolor.sty" 1729265222 55384 b454dec21c2d9f45ec0b793f0995b992 ""
-  "c:/Users/mijan/OneDrive - Politecnico di Milano/Workspaces/Polimi/[IACV] Image Analysis and Computer Vision/Project/iacv_project/report/main.tex" 1780408184 16291 f34a26f3f1bf1e942e6491b821277b64 ""
+  "c:/Users/mijan/OneDrive - Politecnico di Milano/Workspaces/Polimi/[IACV] Image Analysis and Computer Vision/Project/iacv_project/report/main.tex" 1780582197 16291 f34a26f3f1bf1e942e6491b821277b64 ""
   "config/config.tex" 1780405824 2753 c985b0bc914cf69bbb946b1f27917975 ""
   "config/title_page.tex" 1780407510 1500 1e3c4ae1062156dd2fbf4cb5a78a5bdc ""
   "figures/Politecnico_di_Milano/logo_polimi_ing_indinf.eps" 1780399633 1016894 50c9d95dbacdb6a7531ebeec13361098 ""
   "figures/Politecnico_di_Milano/logo_polimi_scritta.eps" 1780399636 851182 27b8398cbf2246d7da4579be38265f9b ""
   "figures/Politecnico_di_Milano/raggiera_polimi.eps" 1780399640 1813066 68b21695bbcbb6d7e09839c06406f8f3 ""
-  "main.aux" 1780414911 8382 5ba955385ae2bdb1a4ca1b2d012d53f3 "pdflatex"
+  "main.aux" 1780582336 8252 43a7ccb8f3ed1252254ea6825cfa590f "pdflatex"
   "main.bbl" 0 -1 0 "bibtex main"
-  "main.out" 1780414911 4898 70c0d24dd1143554deb112e7461162ea "pdflatex"
-  "main.tex" 1780408184 16291 f34a26f3f1bf1e942e6491b821277b64 ""
+  "main.out" 1780582336 4757 87e21b9e043b773fcdc992661e9e2011 "pdflatex"
+  "main.tex" 1780582197 16291 f34a26f3f1bf1e942e6491b821277b64 ""
   "sections/01_abstract.tex" 1780405937 36 59bd4b7e71a143880779210a3797fdbc ""
   "sections/02_introduction.tex" 1780405445 28 2c034194b02d8b44fd7d23f4f6f3f759 ""
-  "sections/04_methodology.tex" 1780414904 19270 0ae2d5515664a94d4c6847f343ca0c9b ""
+  "sections/04_methodology.tex" 1780582331 250 60c03d0807c2d357e0603d832eb3e783 ""
+  "sections/04a_lane_detection.tex" 1780582142 16121 c74a75f51e06cabfb28ffd942d628361 ""
+  "sections/04b_ball_tracking.tex" 1780582238 4826 dcfe62e75351d2c59b368aebe58ed12b ""
+  "sections/04c_rectification_reconstruction.tex" 1780582325 2953 66e4d4a0101bd1bfa761c0766ce09a25 ""
   (generated)
   "main.aux"
   "main.log"
