@@ -1,6 +1,3 @@
-\section{Methodology}
-
-
 \subsection{Lane Detection}
 
 Lane detection constitutes a fundamental component of the proposed bowling analysis pipeline. Unlike traditional autonomous driving applications, where lane detection is primarily used for navigation, in this work it serves two main purposes: restricting the search region for bowling ball detection and estimating the lane geometry required for perspective rectification. By estimating the lane boundaries, a planar homography can be computed to rectify the image plane into a top-down representation of the bowling lane. This rectification, combined with the assumption that the bowling ball remains in contact with the lane surface and preserves a constant radius, enables the estimation of the ball trajectory in three-dimensional space.
@@ -14,7 +11,7 @@ The proposed lane detection framework consists of three main stages: image prepr
 
 
 \subsubsection{Single-channel image transformation}
-Since edge detection methods operate on single-channel intensity images, an initial transformation from the RGB image space $\mathbb{R}^{n\times m\times 3}$ to a single-channel representation $\mathbb{R}^{n\times m}$ is required. The effectiveness of this transformation directly affects the separability of lane boundaries from the surrounding scene, influencing both edge detection robustness and the sensitivity of subsequent line extraction methods.
+Since edge detection methods operate on single-channel intensity images, an initial transformation from the RGB image space ${R}^{n\times m\times 3}$ to a single-channel representation ${R}^{n\times m}$ is required. The effectiveness of this transformation directly affects the separability of lane boundaries from the surrounding scene, influencing both edge detection robustness and the sensitivity of subsequent line extraction methods.
 The objective of this stage is to maximize the contrast between relevant lane structures and the background while minimizing the effect of illumination variability across videos. Bowling recordings may differ considerably in lighting conditions, reflections on the lane surface, and camera exposure settings, making the choice of transformation particularly important.
 As a baseline, the standard grayscale conversion was evaluated conversion \cite{opencv_color_conversion,gonzalez2008digital}  . This transformation computes a weighted combination of the RGB channels according to perceptual luminance:
 
@@ -94,11 +91,10 @@ Once the bottom, lateral, and top lane boundaries are estimated independently, t
 Specifically, the bottom and top boundaries are intersected with the left and right lateral boundaries to obtain the four lane corners: bottom-left, bottom-right, top-right, and top-left. These intersection points define a quadrilateral that approximates the perspective projection of the bowling lane in the image.
 
 
+\subsection{Ball Tracking}
 
 
-\subsection{Ball Dynamics Tracking}
-
-\subsubsection{Trajectory Detection}
+\subsubsection{Trajectory Detection}    
 
 \subsubsection{Spin Detection}
 

@@ -1,51 +1,63 @@
+% A LaTeX template for ARTICLE version of the MSc Thesis submissions to 
+% Politecnico di Milano (PoliMi) - School of Industrial and Information Engineering
+%
+% S. Bonetti, A. Gruttadauria, G. Mescolini, A. Zingaro
+% e-mail: template-tesi-ingind@polimi.it
+%
+% Last Revision: October 2021
+%
+% Copyright 2021 Politecnico di Milano, Italy. Inc. NC-BY
+
 \documentclass[11pt,a4paper]{article} 
 
-% REQUIRED PACKAGES AND  CONFIGURATIONS
-%% PACKAGES FOR TITLES
+%------------------------------------------------------------------------------
+%	REQUIRED PACKAGES AND  CONFIGURATIONS
+%------------------------------------------------------------------------------
+% PACKAGES FOR TITLES
 \usepackage{titlesec}
 \usepackage{color}
 
-%% PACKAGES FOR LANGUAGE AND FONT
+% PACKAGES FOR LANGUAGE AND FONT
 \usepackage[utf8]{inputenc}
 \usepackage[english]{babel}
 \usepackage[T1]{fontenc} % Font encoding
 
-%% PACKAGES FOR IMAGES
+% PACKAGES FOR IMAGES
 \usepackage{graphicx}
-\graphicspath{{Images/}}
+\graphicspath{{figures/}}
 \usepackage{eso-pic} % For the background picture on the title page
 \usepackage{subfig} % Numbered and caption subfigures using \subfloat
 \usepackage{caption} % Coloured captions
 \usepackage{transparent}
 
-%% STANDARD MATH PACKAGES
+% STANDARD MATH PACKAGES
 \usepackage{amsmath}
 \usepackage{amsthm}
 \usepackage{bm}
 \usepackage[overload]{empheq}  % For braced-style systems of equations
 
-%% PACKAGES FOR TABLES
+% PACKAGES FOR TABLES
 \usepackage{tabularx}
 \usepackage{longtable} % tables that can span several pages
 \usepackage{colortbl}
 
-%% PACKAGES FOR ALGORITHMS (PSEUDO-CODE)
+% PACKAGES FOR ALGORITHMS (PSEUDO-CODE)
 \usepackage{algorithm}
 \usepackage{algorithmic}
 
-%% PACKAGES FOR REFERENCES & BIBLIOGRAPHY
+% PACKAGES FOR REFERENCES & BIBLIOGRAPHY
 \usepackage[colorlinks=true,linkcolor=black,anchorcolor=black,citecolor=black,filecolor=black,menucolor=black,runcolor=black,urlcolor=black]{hyperref} % Adds clickable links at references
 \usepackage{cleveref}
 \usepackage[square, numbers, sort&compress]{natbib} % Square brackets, citing references with numbers, citations sorted by appearance in the text and compressed
 \bibliographystyle{plain} % You may use a different style adapted to your field
 
-%% PACKAGES FOR THE APPENDIX
+% PACKAGES FOR THE APPENDIX
 \usepackage{appendix}
 
-%% PACKAGES FOR ITEMIZE & ENUMERATES 
+% PACKAGES FOR ITEMIZE & ENUMERATES 
 \usepackage{enumitem}
 
-%% OTHER PACKAGES
+% OTHER PACKAGES
 \usepackage{amsthm,thmtools,xcolor} % Coloured "Theorem"
 \usepackage{comment} % Comment part of code
 \usepackage{fancyhdr} % Fancy headers and footers
@@ -81,7 +93,11 @@
 % -> title of your work
 \renewcommand{\title}{Title}
 % -> author name and surname
-\renewcommand{\author}{Name Surname}
+\renewcommand{\author}{} % insert your name and surname
+
+\newcommand{\authorB}{Luis Alfonso Pérez Mijangos}
+\newcommand{\authorA}{Jose Luis Vilaseca Gallego}
+
 % -> MSc course
 \newcommand{\course}{Xxxxxxxxxxxx Engineering - Ingegneria Xxxxxxxxxxxx}
 % -> advisor name and surname
@@ -90,28 +106,14 @@
 \newcommand{\firstcoadvisor}{Name Surname} % insert if any otherwise comment
 \newcommand{\secondcoadvisor}{Name Surname} % insert if any otherwise comment
 % -> author ID
-\newcommand{\ID}{Student ID}
+\newcommand{\IDA}{11140177}
+\newcommand{\IDB}{11133173}
 % -> academic year
 \newcommand{\YEAR}{20XX-20XX}
 % -> abstract (only in English)
-\renewcommand{\abstract}{Here goes the Abstract in English of your thesis (in article format)
-followed by a list of keywords.
-The Abstract is a concise summary of the content of the thesis (single page of text)
-and a guide to the most important contributions included in your thesis.
-The Abstract is the very last thing you write.
-It should be a self-contained text and should be clear
-to someone who hasn't (yet) read the whole manuscript.
-The Abstract should contain the answers to the main research questions
-that have been addressed in your thesis.
-It needs to summarize the motivations and the adopted approach as well as
-the findings of your work and their relevance and impact.
-The Abstract is the part appearing in the record of your thesis inside POLITesi,
-the Digital Archive of PhD and Master Theses (Laurea Magistrale) of Politecnico di Milano.
-The Abstract will be followed by a list of four to six keywords.
-Keywords are a tool to help indexers and search engines to find relevant documents.
-To be relevant and effective, keywords must be chosen carefully.
-They should represent the content of your work and be specific to your field or sub-field.
-Keywords may be a single word or two to four words. }
+\renewcommand{\abstract}{
+    \input{sections/01_abstract}
+}
 
 % -> key-words (only in English)
 \newcommand{\keywords}{here, the keywords, of your thesis}
@@ -137,40 +139,19 @@ Keywords may be a single word or two to four words. }
 %-----------------------------------------------------------------------------
 \section{Introduction}
 \label{sec:introduction}
-This document is intended to be both an example of the Polimi \LaTeX{} template for Master Theses in article format,
-as well as a short introduction to its use. It is not intended to be a general introduction to \LaTeX{} itself,
-and the reader is assumed to be familiar with the basics of creating and compiling \LaTeX{} documents (see \cite{oetiker1995not, kottwitz2015latex}). 
-\\
-The cover page of the thesis in article format must contain all the relevant information:
-title of the thesis, name of the Study Programme, name(s) of the author(s),
-student ID number, name of the supervisor, name(s) of the co-supervisor(s) (if any), academic year.
-\\
-Be sure to select a title that is meaningful.
-It should contain important keywords to be identified by indexer.
-Keep the title as concise as possible and comprehensible even to people who are not experts in your field.
-The title has to be chosen at the end of your work so that it accurately captures the main subject of the manuscript.
+\input{sections/02_introduction}
 
-It is convenient to break the article format of your thesis (in article format) into sections and subsections. 
-If necessary, subsubsections, paragraphs and subparagraphs can be used. 
-A new section is created by the command
-\begin{verbatim}
-\section{Title of the section}
-\end{verbatim}
-The numbering can be turned off by using \verb|\section*{}|.
-A new subsection is created by the command
-\begin{verbatim}
-\subsection{Title of the subsection}
-\end{verbatim}
-and, similarly, the numbering can be turned off by adding an asterisk as follows 
-\begin{verbatim}
-\subsection*{}
-\end{verbatim}
-It is recommended to give a label to each section by using the command
-\begin{verbatim}
-\label{sec:section_name}%
-\end{verbatim}
-where the argument is just a text string that you'll use to reference that part
-as follows: \textit{Section~\ref{sec:introduction} contains \sc{INTRODUCTION}  \dots}.
+%-----------------------------------------------------------------------------
+% PROBLEM STATEMENT
+%-----------------------------------------------------------------------------
+
+
+%-----------------------------------------------------------------------------
+% METHODOLOGY
+%-----------------------------------------------------------------------------
+\section{Methodology}
+\label{sec:methodology}
+\input{sections/04_methodology}
 
 %-----------------------------------------------------------------------------
 % EQUATIONS
@@ -236,25 +217,9 @@ Here xxx is the correct format, e.g.  \verb|.png|, \verb|.jpg|, \verb|.eps|, \do
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.3\textwidth]{figures/Politecnico_Di_Milano/logo_polimi_scritta.eps}
+    \includegraphics[width=0.3\textwidth]{Politecnico_di_Milano/logo_polimi_scritta.eps}
     \caption{Caption of the Figure.}
     \label{fig:quadtree}
-\end{figure}
-
-Thanks to the \texttt{\textbackslash subfloat} command, a single figure, such as Figure~\ref{fig:quadtree},
-can contain multiple sub-figures with their own caption and label, e.g. Figure~\ref{fig:polimi_logo1} and Figure~\ref{fig:polimi_logo2}. 
-
-\begin{figure}[H]
-    \centering
-    \subfloat[One PoliMi logo.\label{fig:polimi_logo1}]{
-        \includegraphics[scale=0.5]{figures/Politecnico_Di_Milano/logo_polimi_scritta.eps}
-    }
-    \quad
-    \subfloat[Another one PoliMi logo.\label{fig:polimi_logo2}]{
-        \includegraphics[scale=0.5]{figures/Politecnico_Di_Milano/logo_polimi_scritta2.eps}
-    }
-    \caption[]{Caption of the Figure.}
-    \label{fig:quadtree2}
 \end{figure}
 
 \subsection{Tables}
@@ -262,8 +227,44 @@ can contain multiple sub-figures with their own caption and label, e.g. Figure~\
 
 Within the environments \texttt{table} and  \texttt{tabular} you can create very fancy tables as the one shown in Table~\ref{table:example}.
 
+\begin{table}[H]
+    \caption*{\textbf{Example of Table (optional)}}
+    \centering 
+    \begin{tabular}{|p{3em} c c c |}
+    \hline
+    \rowcolor{bluePoli!40}
+     & \textbf{column1} & \textbf{column2} & \textbf{column3} \T\B \\
+    \hline \hline
+    \textbf{row1} & 1 & 2 & 3 \T\B \\
+    \textbf{row2} & $\alpha$ & $\beta$ & $\gamma$ \T\B\\
+    \textbf{row3} & alpha & beta & gamma \B\\
+    \hline
+    \end{tabular}
+    \\[10pt]
+    \caption{Caption of the Table.}
+    \label{table:example}
+\end{table}
+
 You can also consider to highlight selected columns or rows in order to make tables more readable.
 Moreover, with the use of \texttt{table*} and the option \texttt{bp} it is possible to align them at the bottom of the page. One example is presented in Table~\ref{table:exampleC}. 
+
+\begin{table*}[bp]
+\centering 
+    \begin{tabular}{|p{3em} | c | c | c | c | c | c|}
+    \hline
+%    \rowcolor{bluePoli!40}
+     & \textbf{column1} & \textbf{column2} & \textbf{column3} & \textbf{column4} & \textbf{column5} & \textbf{column6} \T\B \\
+    \hline \hline
+    \textbf{row1} & 1 & 2 & 3 & 4 & 5 & 6 \T\B\\
+    \textbf{row2} & a & b & c & d & e & f \T\B\\
+    \textbf{row3} & $\alpha$ & $\beta$ & $\gamma$ & $\delta$ & $\phi$ & $\omega$ \T\B\\
+    \textbf{row4} & alpha & beta & gamma & delta & phi & omega \B\\
+    \hline
+    \end{tabular}
+    \\[10pt]
+    \caption{Highlighting the columns}
+    \label{table:exampleC}
+\end{table*}
 
 \subsection{Algorithms}
 \label{subsec:algorithms}
@@ -322,6 +323,20 @@ How to write numbered lists:
 Each student is responsible for obtaining copyright permissions, if necessary, to include published material in the thesis.
 This applies typically to third-party material published by someone else.
 
+\section{Plagiarism}
+
+You have to be sure to respect the rules on Copyright and avoid an involuntary plagiarism.
+It is allowed to take other persons' ideas only if the author and his original work are clearly mentioned.
+As stated in the Code of Ethics and Conduct, Politecnico di Milano \textit{promotes the integrity of research,
+condemns manipulation and the infringement of intellectual property}, and gives opportunity to all those
+who carry out research activities to have an adequate training on ethical conduct and integrity while doing research.
+To be sure to respect the copyright rules, read the guides on Copyright legislation and citation styles available
+at:
+\begin{verbatim}
+https://www.biblio.polimi.it/en/tools/courses-and-tutorials
+\end{verbatim}
+You can also attend the courses which are periodically organized on "Bibliographic citations and bibliography management".
+
 %-----------------------------------------------------------------------------
 % CONCLUSION
 %-----------------------------------------------------------------------------
@@ -329,6 +344,21 @@ This applies typically to third-party material published by someone else.
 \color{black}
 A final section containing the main conclusions of your research/study
 and possible future developments of your work have to be inserted in the section ``Conclusions''.
+
+\section{Bibliography and citations}
+Your thesis must contain a suitable Bibliography which lists all the sources consulted on developing the work.
+The list of references is placed at the end of the manuscript after the chapter containing the conclusions.
+It is suggested to use the BibTeX package and save the bibliographic references in the file \verb|bibliography.bib|.
+This is indeed a database containing all the information about the references. To cite in your manuscript, use the \verb|\cite{}| command as follows:
+\\
+\textit{Here is how you cite bibliography entries: \cite{knuth74}, or multiple ones at once: \cite{knuth92,lamport94}}.
+\\
+The bibliography and list of references are generated automatically by running BibTeX \cite{bibtex}.
+
+%-----------------------------------------------------------------------------
+% BIBLIOGRAPHY
+%-----------------------------------------------------------------------------
+\bibliography{bibliography.bib}
 
 \appendix
 \section{Appendix A}
