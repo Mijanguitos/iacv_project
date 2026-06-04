@@ -1,0 +1,251 @@
+from pathlib import Path
+import numpy as np
+import cv2 as cv2
+import json
+import math
+import os
+
+
+def roi_bounds(x1: int, y1: int, 
+               x2: int, y2: int,
+               r: int, frame_shape:tuple, offset: int):
+    
+    x_min = max(0, min(
+                x1 - r - offset,
+                x2 - r - offset))
+    x_max = min(frame_shape[1] - 1, max(
+                x1 + r + offset,
+                x2 + r + offset))
+    y_min = max(0, 
+                y2 - r - offset)
+    y_max = min(frame_shape[0] - 1,
+                y1 + r + offset)
+    
+    return x_min, x_max, y_min, y_max
+
+def frame_preprocessing(frame: cv2.typing.MatLike):
+    # Create CLAHE object (localized histogram equalization)
+    clahe = cv2.createCLAHE(clipLimit = 2.5,
+                            tileGridSize = (15, 15))
+    
+    return clahe.apply(frame)
+
+def optical_flow(gray_frame_1: cv2.typing.MatLike,
+                 gray_frame_2: cv2.typing.MatLike,
+                 mask: cv2.typing.MatLike,
+                 ball_radius: int):
+
+    # Detect corners Shi-Tomasi
+    p0 = cv2.goodFeaturesToTrack(gray_frame_1, 
+                                 mask=mask, 
+                                 maxCorners=100, 
+                                 qualityLevel=0.001, 
+                                 minDistance=0, 
+                                 blockSize=3)
+    if p0 is None:
+        raise ValueError("No features detected")
+    
+    lk_params = {
+        "winSize"   : (21, 21),
+        "maxLevel"  : 3,
+        "criteria"  : (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 15, 0.01),
+    }
+
+    p1, status_forward, _ = cv2.calcOpticalFlowPyrLK(
+        gray_frame_1, gray_frame_2, p0, None, **lk_params
+    )
+    p0r, status_backward, _ = cv2.calcOpticalFlowPyrLK(
+        gray_frame_2, gray_frame_1, p1, None, **lk_params
+    )
+
+    fb_error = np.linalg.norm(p0 - p0r, axis=2)
+    return p0, p1, p0r, status_forward, status_backward, fb_error
+
+def filter_3d_points(
+    p0,
+    p1,
+    p0r,
+    status_forward,
+    status_backward,
+    fb_error,
+    center_roi1,
+    center_roi2,
+    ball_radius,
+    fb_threshold=10.0,
+    low_threshold_factor=5,
+):
+    movement_threshold = ball_radius
+    low_movement_threshold = ball_radius / low_threshold_factor
+
+    old3d, new3d, good_pts = [], [], []
+    for old_pt, new_pt, s1, s2, err in zip(
+        p0.reshape(-1, 2),
+        p1.reshape(-1, 2),
+        status_forward.ravel(),
+        status_backward.ravel(),
+        fb_error.ravel(),
+    ):
+        if s1 and s2 and err < fb_threshold:
+            displacement = np.linalg.norm(new_pt - old_pt)
+            if low_movement_threshold < displacement < movement_threshold:
+                ox, oy = old_pt - center_roi1
+                nx, ny = new_pt - center_roi2
+                oz = math.sqrt(max(ball_radius**2 - ox**2 - oy**2, 0))
+                nz = math.sqrt(max(ball_radius**2 - nx**2 - ny**2, 0))
+                old3d.append([ox, oy, oz])
+                new3d.append([nx, ny, nz])
+                good_pts.append((old_pt, new_pt))
+
+    old3d = np.array(old3d)
+    new3d = np.array(new3d)
+
+    if old3d.shape[0] < 3:
+        # Retry with more lenient filtering
+        print("Recursive")
+        old3d, new3d, good_pts = filter_3d_points(
+            p0,
+            p1,
+            p0r,
+            status_forward,
+            status_backward,
+            fb_error,
+            center_roi1,
+            center_roi2,
+            ball_radius,
+            low_threshold_factor=20,
+        )
+
+    return old3d, new3d, good_pts
+
+def compute_rotation(old3d, new3d):
+    P, Q = old3d, new3d
+    H = P.T @ Q
+    U, _, Vt = np.linalg.svd(H)
+    R = Vt.T @ U.T
+    if np.linalg.det(R) < 0:
+        Vt[-1, :] *= -1
+        R = Vt.T @ U.T
+
+    cos_theta = np.clip((np.trace(R) - 1) / 2, -1.0, 1.0)
+    theta = np.arccos(cos_theta)
+
+    if np.isclose(theta, 0):
+        axis = np.array([0.0, 0.0, 1.0])
+    else:
+        axis = np.array([R[2, 1] - R[1, 2], R[0, 2] - R[2, 0], R[1, 0] - R[0, 1]]) / (
+            2 * np.sin(theta)
+        )
+        axis /= np.linalg.norm(axis)
+
+    return axis, theta
+
+def spin_detection(trajectory_path: os.PathLike[str], 
+                   video_path: os.PathLike[str],
+                   save_path: os.PathLike[str]):
+    
+    # Load the video clip and get total number of frames and frame rate
+    CAP = cv2.VideoCapture(video_path)                  # Class for video captured from the clip's file
+    n_frames = int(CAP.get(cv2.CAP_PROP_FRAME_COUNT))   # Clip's total number of frames
+    fps = CAP.get(cv2.CAP_PROP_FPS)                     # Clip's frame rate
+    width  = CAP.get(cv2.CAP_PROP_FRAME_WIDTH)    # float `width`
+    height = CAP.get(cv2.CAP_PROP_FRAME_HEIGHT)   # float `height`
+
+    # Extract the trajectory data from the JSON file
+    with open(trajectory_path, "r") as f:
+        data = json.load(f)
+
+    trajectory = data["estimations"]
+    xs = list(map(int, trajectory["x"]))
+    ys = list(map(int, trajectory["y"]))
+    rs = list(map(int, trajectory["r"]))
+    fs = trajectory["f"]
+
+    # Dictionary to save the final output
+    spin_output = dict()
+
+    # Loop through the frames of the video minus one frame
+    for i in range(n_frames - 1):
+        # Set the capture to the first frame and get the following one
+        CAP.set(cv2.CAP_PROP_POS_FRAMES, i)
+        ret1, frame1 = CAP.read()
+        ret2, frame2 = CAP.read()
+
+        if not (ret1 and ret2):
+            break
+
+        if i in fs and i != fs[-1]:
+            # Calculate the index for xs, ys, rs based on the frame number
+            j = i - fs[0]  
+
+            x1, y1, r1 = xs[j], ys[j], rs[j]
+            x2, y2, r2 = xs[j + 1], ys[j + 1], rs[j + 1]
+
+            # Get the ROI bounds for both frames
+            x_min, x_max, y_min, y_max = roi_bounds(x1, y1, x2, y2,
+                                                    r1, frame1.shape,
+                                                    offset=2)
+            
+            roi1 = frame1[y_min:y_max, x_min:x_max]
+            roi2 = frame2[y_min:y_max, x_min:x_max]
+            # Compute center in ROI coordinates
+            center_roi1 = np.array([x1 - x_min, y1 - y_min])
+            center_roi2 = np.array([x2 - x_min, y2 - y_min])
+
+            gray1 = cv2.cvtColor(roi1, cv2.COLOR_BGR2GRAY)
+            gray2 = cv2.cvtColor(roi2, cv2.COLOR_BGR2GRAY)
+
+            # Gray frame preprocessing
+            gray1 = frame_preprocessing(gray1)
+            gray2 = frame_preprocessing(gray2)
+
+            mask = np.zeros_like(gray1)
+            cv2.circle(
+                mask, tuple(center_roi1.astype(int)), int(r1 * 0.8), 255, -1
+            )
+            try:
+                p0, p1, p0r, s_f, s_b, fb_error = optical_flow(
+                    gray1, gray2, mask, r1
+                )
+            except ValueError:
+                print(ValueError)
+                continue
+            
+            old3d, new3d, good_pts = filter_3d_points(
+                p0, p1, p0r, s_f, s_b, fb_error, center_roi1, center_roi2, r1
+            )
+            
+            print(i, p0.shape, p1.shape)
+            print(i, old3d.shape, new3d.shape)
+
+            axis, theta = compute_rotation(old3d, new3d)
+
+            spin_output[i] = {
+                "frame": i,
+                "x": x1,
+                "y": y1,
+                "radius": r1,
+                "x_axis": axis[0],
+                "y_axis": axis[1],
+                "z_axis": axis[2],
+                "angle": theta,
+            }
+
+    
+
+    with open(f"{save_path}_spin.json", 'w') as f:
+        json.dump(spin_output, f, indent=4)
+
+
+if __name__ == "__main__":
+
+    PROJECT_ROOT = Path().resolve()
+
+    clip = "clip_7"
+    extension = ".mov"
+    video_path = f"{PROJECT_ROOT}\\data\\clips\\{clip}{extension}"
+    save_path = f"{PROJECT_ROOT}\\src\\spin\\spin_output\\{clip}"
+    trajectory_path = f"{PROJECT_ROOT}\\src\\ball_detection\\postprocessing_output\\postprocessed_{clip}.json"
+
+    spin_detection(trajectory_path, video_path, save_path)
+
+    print(-1)
