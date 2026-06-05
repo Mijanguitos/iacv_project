@@ -30,8 +30,8 @@ However, translating pixel-space detections into metric measurements traditional
 
 \subsubsection{Ball Tracking, Trajectory Estimation, and Spin}
 Tracking fast-moving sports balls is challenging due to motion blur, occlusion, and background clutter. Modern solutions frequently utilize deep learning frameworks (e.g., TrackNet) or background subtraction to isolate the ball \cite{huang2019tracknetdeeplearningnetwork}. To transition from 2D pixel tracking to 3D spatial estimation without depth sensors, domain-specific applications enforce physical priors. By leveraging the geometric constraint that a rigid sphere maintains contact with a known ground plane, the object's spatial coordinates can be robustly estimated \cite{6115930}. 
-Furthermore, estimating spin from a monocular feed is notoriously difficult. State-of-the-art approaches typically involve analyzing the frame-by-frame displacement of surface textures (such as finger holes, logos, or dotted patterns) using feature-matching algorithms, template matching, or optical flow \cite{gossard2024tabletennisballspin} (AGREGAR CITAS OPTICAL FLOW)
-. Recent studies have even explored event-based cameras to capture ultra-fast spin dynamics \cite{10678117}, though adapting texture-based tracking for standard frame-rate cameras remains the primary method for accessible sports analytics.
+Furthermore, estimating spin from a monocular feed is notoriously difficult. State-of-the-art approaches typically involve analyzing the frame-by-frame displacement of surface textures (such as finger holes, logos, or dotted patterns) using feature-matching algorithms, template matching, or optical flow \cite{gossard2024tabletennisballspin} \cite{10.5555/1623264.1623280}. Recent studies have even explored event-based cameras to capture ultra-fast spin dynamics \cite{10678117}, though adapting texture-based tracking for standard frame-rate cameras remains the primary method for accessible sports analytics.
+
 
 
 
