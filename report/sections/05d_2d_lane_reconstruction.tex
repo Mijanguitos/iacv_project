@@ -5,19 +5,22 @@ To qualitatively validate the accuracy of the computed homography matrices, the 
 % --- FIGURE FOR RECTIFIED LANES ---
 \begin{figure}[htbp]
     \centering
-    % If you are using the subcaption package, you can put all 4 images side-by-side.
-    % \begin{subfigure}{0.24\textwidth}
-    %     \includegraphics[width=\linewidth]{images/rectified_lane_clip_1.jpg}
-    % \end{subfigure}
-    % \begin{subfigure}{0.24\textwidth}
-    %     \includegraphics[width=\linewidth]{images/rectified_lane_clip_2.jpg}
-    % \end{subfigure}
-    % \begin{subfigure}{0.24\textwidth}
-    %     \includegraphics[width=\linewidth]{images/rectified_lane_clip_3.jpg}
-    % \end{subfigure}
-    % \begin{subfigure}{0.24\textwidth}
-    %     \includegraphics[width=\linewidth]{images/rectified_lane_clip_5.jpg}
-    % \end{subfigure}
-    \caption{Bird's-eye view perspective rectification across multiple test videos. The computed homography matrices successfully eliminate perspective distortion, rendering the wood boards perfectly parallel. This confirms the high precision of the foundational boundary detection algorithms.}
+    % The blank lines between the images force LaTeX to stack them vertically
+    
+    \includegraphics[angle=90, width=\textwidth]{figures/results/rectified_lane_clip_1.png}
+    
+    \vspace{0.2cm} % Adds a small gap between the lanes
+    
+    \includegraphics[angle=90, width=\textwidth]{figures/results/rectified_lane_clip_2.png}
+    
+    % \vspace{0.2cm}
+    
+    % \includegraphics[angle=90, width=\textwidth]{figures/results/rectified_lane_clip_3.png}
+    
+    \vspace{0.2cm}
+    
+    \includegraphics[angle=90, width=\textwidth]{figures/results/rectified_lane_clip_5.png}
+    
+    \caption{Bird's-eye view perspective rectification. The computed homography matrices eliminate perspective distortion, rendering the lane boards parallel. The horizontal alignment of the arrows and pins across all trials confirms that true metric proportions are successfully preserved.}
     \label{fig:rectified_lanes}
 \end{figure}
