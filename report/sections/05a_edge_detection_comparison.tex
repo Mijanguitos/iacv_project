@@ -1,15 +1,15 @@
-To empirically validate the optimal preprocessing and feature extraction strategy for the lane detection pipeline, a comparative analysis was conducted across eight distinct bowling video clips. These clips were specifically selected to encompass a variety of challenging real-world conditions, including varying camera exposures, surface glare, and heterogeneous lighting. The study evaluated the combinatorial performance of five single-channel transformations (Default Grayscale, Lightness, Hue, $R+G-B$, and PCA) paired with three standard edge detection algorithms (Sobel, Canny, and Laplacian). A trial was deemed successful strictly if the resulting gradient map enabled the subsequent Hough Transform and heuristic filters to correctly segment the entire playing surface by accurately isolating all four geometric boundaries (the foul line, the pin deck, and both lateral gutters). The quantitative success rates for each combination are detailed in Table \ref{tab:ablation_results}.
+To empirically validate the optimal preprocessing and feature extraction strategy for the lane detection pipeline, a comparative analysis was conducted across eight distinct bowling video clips. These clips were specifically selected to encompass a variety of challenging real-world conditions, including varying camera exposures, surface glare, and heterogeneous lighting. The study evaluated the combinatorial performance of five single-channel transformations (Default Grayscale, Lightness, Hue, $R+G-B$, and PCA) paired with three standard edge detection algorithms (Sobel, Canny, and Laplacian). A trial was deemed successful strictly if the resulting gradient map enabled the subsequent Hough Transform and heuristic filters to correctly segment the entire playing surface by accurately isolating all four geometric boundaries (the foul line, the pin deck, and both lateral gutters), as demonstrated in Figure \ref{fig:trial_success}. The quantitative success rates for each combination are detailed in Table \ref{tab:ablation_results}.
 
-An analysis of the aggregated results reveals clear performance disparities not only among the color transformations but, crucially, among the edge detection algorithms. The Sobel operator emerged as the unequivocally strongest edge detection method for correctly identifying lane borders, outperforming Canny and Laplacian across almost every grayscale transformation. In contrast, while the multi-stage Canny detector and the second-order Laplacian filter are exceptionally strong edge detectors, this extreme sensitivity proved detrimental in a visually cluttered bowling alley. Qualitative analysis of the failed clips revealed that Canny and Laplacian frequently detected crisp, high-contrast edges entirely outside the target playing surface, such as architectural lines on the background wall, adjacent lane gutters, or the bowler's silhouette. These highly defined but irrelevant structures generated overwhelmingly strong candidate lines in the Hough space. Consequently, these false positives bypassed the spatial and geometric heuristics of the pipeline, leading to incorrect boundary selection and severely deformed segmentation quadrilaterals (see Figure \ref{fig:over_sensitive_edges}). Sobel, by providing a more subdued and directionally targeted gradient map, allowed the geometric filters to consistently lock onto the true lane boundaries.
- 
-When observing the single-channel transformations paired with this dominant Sobel filter, a divergence between general cross-filter robustness and peak specific performance became apparent. In terms of general stability across all detectors, the domain-specific $R+G-B$ transformation proved highly robust. It successfully identified boundaries in 5, 4, and 3 clips when paired with the Sobel, Canny, and Laplacian filters, respectively. This consistency validates the underlying hypothesis inherited from autonomous driving literature: mathematically amplifying the red and green channels while suppressing the blue channel effectively isolates the warm, wooden tones of the bowling lane from the cooler, heavily shadowed regions of the gutters and background.
-
-Despite the baseline stability of the $R+G-B$ transformation, the highest success rate was achieved by the standard Default Grayscale conversion paired with the Sobel filter, which successfully localized boundaries in 6 out of the 8 clips. The perceptual luminance weighting of the default grayscale conversion provided the cleanest directional intensity gradients at the lane edges when acted upon by the Sobel operator. Consequently, optimizing for the highest peak accuracy across diverse video inputs, this specific combination was selected as the final implementation for the pipeline.
-
-Finally, the analysis provided valuable insights into the theoretical limitations of chromatic edge detection. It was initially hypothesized that the Hue channel from the HSV color space might yield interesting results by isolating pure color transitions and entirely negating the impact of absolute brightness and shadows. In practice, however, the Hue channel demonstrated the poorest performance of the study, completely failing to localize boundaries across almost all filters. Qualitative analysis of the output (see Figure \ref{fig:hue_failure}) revealed the cause of this failure: the Hue representation effectively erased the critical geometric boundaries (particularly the bottom foul line) from the image entirely. This occurs because the physical demarcations of a bowling lane (such as a dark foul line or shaded gutters contrasting against the light wooden surface) are primarily defined by sharp shifts in luminance and intensity, rather than distinct shifts in core color. By stripping away the intensity information, the Hue channel eliminates the necessary gradient contrast, causing the borders to blend indistinguishably into the background. This visual evidence conclusively confirms that robust boundary extraction in a bowling setting relies fundamentally on structural intensity rather than pure chromaticity.
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.48\textwidth]{figures/results/correct_lane_detection.png}
+    \hfill
+    \includegraphics[width=0.48\textwidth]{figures/results/incorrect_lane_detection.png}
+    \caption{Criteria for segmentation success. Left: A successful trial where the estimated quadrilateral accurately isolates the true playing surface. Right: An unsuccessful trial where the left boundary is not correctly detected.}
+    \label{fig:trial_success}
+\end{figure}
 
 % --- TABLE OF RESULTS ---
-% Note: Make sure to include \usepackage{booktabs} in your document preamble.
 \begin{table}[htbp]
 \centering
 \caption{Quantitative success rates of boundary detection for each preprocessing and edge detection combination across 8 video clips.}
@@ -44,20 +44,40 @@ pca & laplacian & 0 & 0 & 1 & 0 & 1 & 0 & 1 & 0 & 3 \\
 } % Closes the resizebox
 \end{table}
 
+
+An analysis of the aggregated results reveals clear performance disparities not only among the color transformations but, crucially, among the edge detection algorithms. The Sobel operator emerged as the unequivocally strongest edge detection method for correctly identifying lane borders, outperforming Canny and Laplacian across almost every grayscale transformation. In contrast, while the multi-stage Canny detector and the second-order Laplacian filter are exceptionally strong edge detectors, this extreme sensitivity proved detrimental in a visually cluttered bowling alley. Qualitative analysis of the failed clips revealed that Canny and Laplacian frequently detected crisp, high-contrast edges entirely outside the target playing surface, such as architectural lines on the background wall, adjacent lane gutters, or the bowler's silhouette. These highly defined but irrelevant structures generated overwhelmingly strong candidate lines in the Hough space. Consequently, these false positives bypassed the spatial and geometric heuristics of the pipeline, leading to incorrect boundary selection and severely deformed segmentation quadrilaterals (see Figure \ref{fig:over_sensitive_edges}). Sobel, by providing a more subdued and directionally targeted gradient map, allowed the geometric filters to consistently lock onto the true lane boundaries.
+ 
+
 % --- FIGURES ---
 \begin{figure}[htbp]
     \centering
-    % Replace the placeholder file names with your actual image paths
-    % \includegraphics[width=0.48\textwidth]{images/default_canny_quad.png}
-    % \hfill
-    % \includegraphics[width=0.48\textwidth]{images/pca_laplacian_quad.png}
-    \caption{Examples of heuristic failure due to over-sensitive edge detection. Left: Canny detects background wall structures. Right: Laplacian detects the bowler's leg and adjacent lane. Both result in an incorrect homography quadrilateral.}
+    % Top Row: The edge detection maps
+    \includegraphics[width=0.48\textwidth]{figures/results/canny_over_sensitive.png}
+    \hfill
+    \includegraphics[width=0.48\textwidth]{figures/results/laplacian_over_sensitive.png}
+    
+    \vspace{0.2cm} % Adds a tiny bit of vertical breathing room between the rows
+    
+    % Bottom Row: The resulting bad quadrilaterals
+    \includegraphics[width=0.48\textwidth]{figures/results/canny_over_sensitive_lane.png}
+    \hfill
+    \includegraphics[width=0.48\textwidth]{figures/results/laplacian_over_sensitive_lane.png}
+    
+    \caption{Examples of heuristic failure due to over-sensitive edge detection. Top Left: Canny detects background wall structures. Top Right: Laplacian detects the bowler's leg and adjacent lane. Bottom Row: The respective incorrect homography quadrilaterals resulting from these flawed edge maps.}
     \label{fig:over_sensitive_edges}
 \end{figure}
 
+When observing the single-channel transformations paired with this dominant Sobel filter, a divergence between general cross-filter robustness and peak specific performance became apparent. In terms of general stability across all detectors, the domain-specific $R+G-B$ transformation proved highly robust. It successfully identified boundaries in 5, 4, and 3 clips when paired with the Sobel, Canny, and Laplacian filters, respectively. This consistency validates the underlying hypothesis inherited from autonomous driving literature: mathematically amplifying the red and green channels while suppressing the blue channel effectively isolates the warm, wooden tones of the bowling lane from the cooler, heavily shadowed regions of the gutters and background.
+
+Despite the baseline stability of the $R+G-B$ transformation, the highest success rate was achieved by the standard Default Grayscale conversion paired with the Sobel filter, which successfully localized boundaries in 6 out of the 8 clips. The perceptual luminance weighting of the default grayscale conversion provided the cleanest directional intensity gradients at the lane edges when acted upon by the Sobel operator. Consequently, optimizing for the highest peak accuracy across diverse video inputs, this specific combination was selected as the final implementation for the pipeline.
+
+Finally, the analysis provided valuable insights into the theoretical limitations of chromatic edge detection. It was initially hypothesized that the Hue channel from the HSV color space might yield interesting results by isolating pure color transitions and entirely negating the impact of absolute brightness and shadows. In practice, however, the Hue channel demonstrated the poorest performance of the study, completely failing to localize boundaries across almost all filters. Qualitative analysis of the output (see Figure \ref{fig:hue_failure}) revealed the cause of this failure: the Hue representation effectively erased the critical geometric boundaries (particularly the bottom foul line) from the image entirely. This occurs because the physical demarcations of a bowling lane (such as a dark foul line or shaded gutters contrasting against the light wooden surface) are primarily defined by sharp shifts in luminance and intensity, rather than distinct shifts in core color. By stripping away the intensity information, the Hue channel eliminates the necessary gradient contrast, causing the borders to blend indistinguishably into the background. This visual evidence conclusively confirms that robust boundary extraction in a bowling setting relies fundamentally on structural intensity rather than pure chromaticity.
+
+
+
 \begin{figure}[htbp]
     \centering
-    % \includegraphics[width=0.6\textwidth]{images/hue_laplacian_bottom_segments.png}
+    \includegraphics[width=0.6\textwidth]{figures/results/hue_removes_bottom_boundary.png}
     \caption{Output of the Hue channel on the lower lane segment. By discarding luminance data, the critical intensity contrast of the foul line is completely erased, resulting in a failure to detect the bottom boundary.}
     \label{fig:hue_failure}
 \end{figure}
