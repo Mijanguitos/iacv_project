@@ -1,0 +1,23 @@
+Following the successful segmentation of the lane boundaries and the robust localization of the pin deck via RANSAC regression, the four intersecting corners of the playing surface (foul line and pin deck intersecting with the lateral gutters) are extracted to form a 2D quadrilateral in the image plane. To translate these distorted pixel coordinates into a uniform spatial environment, a planar homography matrix is computed. This projective transformation maps the source quadrilateral onto a normalized, top-down rectangular destination plane representing the physical proportions of the bowling lane.
+
+To qualitatively validate the accuracy of the computed homography matrices, the original perspective video frames were warped to generate a direct bird's-eye view of the lane. As demonstrated in Figure \ref{fig:rectified_lanes}, this transformation successfully rectifies the physical surface across various video clips characterized by differing camera positions, focal lengths, and lighting conditions. The geometric efficacy of the homography is visually confirmed by the structural alignment within these warped images: the longitudinal wood grain and target arrows maintain strict verticality without tapering toward a vanishing point. Because even minor pixel localization errors in the preceding boundary detection modules would severely distort this projection, the undistorted spatial structure achieved validates the stability of the foundational geometric model. Consequently, these homography matrices provide a reliable mathematical foundation for the subsequent mapping of the balls' real-world trajectories.
+
+% --- FIGURE FOR RECTIFIED LANES ---
+\begin{figure}[htbp]
+    \centering
+    % If you are using the subcaption package, you can put all 4 images side-by-side.
+    % \begin{subfigure}{0.24\textwidth}
+    %     \includegraphics[width=\linewidth]{images/rectified_lane_clip_1.jpg}
+    % \end{subfigure}
+    % \begin{subfigure}{0.24\textwidth}
+    %     \includegraphics[width=\linewidth]{images/rectified_lane_clip_2.jpg}
+    % \end{subfigure}
+    % \begin{subfigure}{0.24\textwidth}
+    %     \includegraphics[width=\linewidth]{images/rectified_lane_clip_3.jpg}
+    % \end{subfigure}
+    % \begin{subfigure}{0.24\textwidth}
+    %     \includegraphics[width=\linewidth]{images/rectified_lane_clip_5.jpg}
+    % \end{subfigure}
+    \caption{Bird's-eye view perspective rectification across multiple test videos. The computed homography matrices successfully eliminate perspective distortion, rendering the wood boards perfectly parallel. This confirms the high precision of the foundational boundary detection algorithms.}
+    \label{fig:rectified_lanes}
+\end{figure}

@@ -56,3 +56,227 @@ author = {Pei-Chen Wu and Chin-Yu Chang and Chang Hong Lin},
 keywords = {Line fitting, Local edge-orientation, Kalman filter},
 abstract = {Lane-mark detection is one of the most important parts of the intelligent transportation system (ITS). Cameras mounted in front of automobiles are used to capture the road scene to detect lane-marks. This paper proposes a new lane-mark extraction algorithm that consists of six parts. We first determine the regions of interest (ROIs) of captured images and investigate their boundaries. Then, we divide the boundary image into subimages to calculate the local edge-orientation of each block and remove edges with abnormal orientations. After that, the multi-adaptive thresholding method is employed for each subimage so that the system can work efficiently for an image that has different contrasts to indicate sub-regions for lane-marks. We then verify these candidate lane-mark edges and fit the lane-marks using either straight or curved line models. A Kalman filter is also applied to track them. The proposed method is evaluated in several situations, including in bad weather conditions and in the presence of shadow effects, obstacles such as wipers, or road signs on the road. The results show that the proposed method can detect the lane-marks in real time for various complex environments.}
 }
+
+
+
+@article{DBLP:journals/corr/Aly14,
+  author       = {Mohamed Aly},
+  title        = {Real time Detection of Lane Markers in Urban Streets},
+  journal      = {CoRR},
+  volume       = {abs/1411.7113},
+  year         = {2014},
+  url          = {http://arxiv.org/abs/1411.7113},
+  eprinttype   = {arXiv},
+  eprint       = {1411.7113},
+  timestamp    = {Thu, 19 Sep 2019 11:29:54 +0200},
+  biburl       = {https://dblp.org/rec/journals/corr/Aly14.bib},
+  bibsource    = {dblp computer science bibliography, https://dblp.org}
+}
+
+@ARTICLE{888718,
+  author={Zhang, Z.},
+  journal={IEEE Transactions on Pattern Analysis and Machine Intelligence}, 
+  title={A flexible new technique for camera calibration}, 
+  year={2000},
+  volume={22},
+  number={11},
+  pages={1330-1334},
+  keywords={Cameras;Calibration;Computer vision;Layout;Lenses;Nonlinear distortion;Closed-form solution;Maximum likelihood estimation;Computer simulation;Testing},
+  doi={10.1109/34.888718}}
+
+
+@book{Hartley_Zisserman_2004,
+  place={Cambridge},
+  edition={2},
+  title={Multiple View Geometry in Computer Vision},
+  publisher={Cambridge University Press}, 
+  author={Hartley, Richard and Zisserman, Andrew}, 
+  year={2004}}
+
+
+@article{YU2009643,
+  title = {Automatic camera calibration of broadcast tennis video with applications to 3D virtual content insertion and ball detection and tracking},
+  journal = {Computer Vision and Image Understanding},
+  volume = {113},
+  number = {5},
+  pages = {643-652},
+  year = {2009},
+  note = {Computer Vision Based Analysis in Sport Environments},
+  issn = {1077-3142},
+  doi = {https://doi.org/10.1016/j.cviu.2008.01.006},
+  url = {https://www.sciencedirect.com/science/article/pii/S1077314208000416},
+  author = {Xinguo Yu and Nianjuan Jiang and Loong-Fah Cheong and Hon Wai Leong and Xin Yan},
+  keywords = {Sports video, Camera calibration, Group-wise data analysis, Hough-like search, Virtual content insertion, Ball detection and tracking},
+  abstract = {This paper presents an original algorithm to automatically acquire accurate camera calibration from broadcast tennis video (BTV) as well as demonstrates two of its many applications. Accurate camera calibration from BTV is challenging because the frame-data of BTV is often heavily distorted and full of errors, resulting in wildly fluctuating camera parameters. To meet this challenge, we propose a frame grouping technique, which is based on the observation that many frames in BTV possess the same camera viewpoint. Leveraging on this fact, our algorithm groups frames according to the camera viewpoints. We then perform a group-wise data analysis to obtain a more stable estimate of the camera parameters. Recognizing the fact that some of these parameters do vary somewhat even if they have similar camera viewpoint, we further employ a Hough-like search to tune such parameters, minimizing the reprojection disparity. This two-tiered process gains stability in the estimates of the camera parameters, and yet ensures good match between the model and the reprojected camera view via the tuning step. To demonstrate the utility of such stable calibration, we apply the camera matrix acquired to two applications: (a) 3D virtual content insertion; and (b) tennis-ball detection and tracking. The experimental results show that our algorithm is able to acquire accurate camera matrix and the two applications have very good performances.}
+}
+
+
+@inproceedings{10.1145/3689061.3689067,
+  author = {Sato, Kanon and Nakabayashi, Takuya and Yamaguchi, Masahiro and Higa, Kyota and Fujiwara, Ryo and Saito, Hideo},
+  title = {Time-consistent Ball Tracking and Spin Estimation with Event Camera},
+  year = {2024},
+  isbn = {9798400711985},
+  publisher = {Association for Computing Machinery},
+  address = {New York, NY, USA},
+  url = {https://doi.org/10.1145/3689061.3689067},
+  doi = {10.1145/3689061.3689067},
+  abstract = {Ball tracking based on sports videos captured by high-speed cameras has had limited applicability due to the need for sufficient lighting and the necessity of abundant computational resources to process the large amount of captured data. To overcome these problems, this paper addresses ball tracking using an event camera. An event camera outputs luminance changes in a scene as "events" and is characterized by high temporal resolution, high dynamic range, and data efficiency. The proposed method selects the ball position from the bounding boxes output by the object detector by taking into account the ball motion estimated from the events and the past ball positions using Contrast Maximization (CMax). Considering past ball positions enables us to estimate the ball trajectory consistently over time and detect the ball position more accurately. Additionally, CMax is applied to the events within the tracked ball bounding box, allowing for the estimation of the ball spin. Experimental results in this paper show that the proposed method is quantitatively and qualitatively more accurate than conventional ball tracking methods and demonstrates the potential ability to estimate ball spin.},
+  booktitle = {Proceedings of the 7th ACM International Workshop on Multimedia Content Analysis in Sports},
+  pages = {59–64},
+  numpages = {6},
+  keywords = {ball tracking, event cameras, spin estimation},
+  location = {Melbourne VIC, Australia},
+  series = {MMSports '24}
+}
+
+
+@misc{huang2019tracknetdeeplearningnetwork,
+      title={TrackNet: A Deep Learning Network for Tracking High-speed and Tiny Objects in Sports Applications}, 
+      author={Yu-Chuan Huang and I-No Liao and Ching-Hsuan Chen and Tsì-Uí İk and Wen-Chih Peng},
+      year={2019},
+      eprint={1907.03698},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/1907.03698}, 
+}
+
+
+@INPROCEEDINGS{6115930,
+  author={Chen, Hua-Tsung and Chou, Chien-Li and Tsai, Wen-Jiin and Lee, Suh-Yin},
+  booktitle={2011 Visual Communications and Image Processing (VCIP)}, 
+  title={3D ball trajectory reconstruction from single-camera sports video for free viewpoint virtual replay}, 
+  year={2011},
+  volume={},
+  number={},
+  pages={1-4},
+  keywords={Three dimensional displays;Trajectory;Cameras;Image reconstruction;Equations;Mathematical model;Games},
+  doi={10.1109/VCIP.2011.6115930}}
+
+@misc{gossard2024tabletennisballspin,
+      title={Table tennis ball spin estimation with an event camera}, 
+      author={Thomas Gossard and Julian Krismer and Andreas Ziegler and Jonas Tebbe and Andreas Zell},
+      year={2024},
+      eprint={2404.09870},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2404.09870}, 
+}
+
+
+@INPROCEEDINGS{10678117,
+  author={Nakabayashi, Takuya and Higa, Kyota and Yamaguchi, Masahiro and Fujiwara, Ryo and Saito, Hideo},
+  booktitle={2024 IEEE/CVF Conference on Computer Vision and Pattern Recognition Workshops (CVPRW)}, 
+  title={Event-based Ball Spin Estimation in Sports}, 
+  year={2024},
+  volume={},
+  number={},
+  pages={3367-3375},
+  keywords={Estimation;Lighting;Games;Visual systems;Cameras;Vectors;Pattern recognition;event camera;spin estimation},
+  doi={10.1109/CVPRW63382.2024.00341}}
+
+
+@online{opencv_color_conversions,
+    author = {{OpenCV Team}},
+    title = {Color Conversions - OpenCV Documentation},
+    year = {2026},
+    url = {https://docs.opencv.org/4.x/de/d25/imgproc_color_conversions.html},
+    urldate = {2026-06-04}
+}
+
+@article{canny1986computational,
+  author = {Canny, John},
+  year = {1986},
+  month = {12},
+  pages = {679 - 698},
+  title = {A Computational Approach To Edge Detection},
+  volume = {PAMI-8},
+  isbn = {9780080515816},
+  journal = {Pattern Analysis and Machine Intelligence, IEEE Transactions on},
+  doi = {10.1109/TPAMI.1986.4767851}
+}
+
+@article{sobel,
+  author = {Sobel, Irwin and Feldman, Gary},
+  year = {1973},
+  month = {01},
+  pages = {271-272},
+  title = {A 3×3 isotropic gradient operator for image processing},
+  journal = {Pattern Classification and Scene Analysis}
+}
+
+
+@article{laplacian,
+  author = {Marr, D. and Hildreth, Ellen},
+  year = {1980},
+  month = {02},
+  pages = {187-217},
+  title = {Theory of Edge Detection},
+  volume = {207},
+  journal = {Proceedings of the Royal Society of London. Series B, Containing papers of a Biological character. Royal Society (Great Britain)},
+  doi = {10.1098/rspb.1980.0020}
+}
+
+@book{jolliffe2002principal,
+  title={Principal Component Analysis},
+  author={Jolliffe, I.T.},
+  isbn={9780387954424},
+  lccn={2002019560},
+  series={Springer Series in Statistics},
+  url={https://books.google.it/books?id=TtVF-ao4fI8C},
+  year={2002},
+  publisher={Springer}
+}
+
+
+@article{Duda1972UseOT,
+  title={Use of the Hough transformation to detect lines and curves in pictures},
+  author={Richard O. Duda and Peter E. Hart},
+  journal={Communications of the ACM},
+  year={1972},
+  volume={15},
+  pages={11 - 15},
+  url={https://api.semanticscholar.org/CorpusID:1105637}
+}
+
+@article{probabilistic_hough,
+  author = {Matas, Jiri and Galambos, C. and Kittler, J.},
+  year = {2000},
+  month = {04},
+  pages = {119-137},
+  title = {Robust Detection of Lines Using the Progressive Probabilistic Hough Transform},
+  volume = {78},
+  journal = {Computer Vision and Image Understanding},
+  doi = {10.1006/cviu.1999.0831}
+}
+
+@article{SIFT,
+  author = {Lowe, David},
+  year = {2004},
+  month = {11},
+  pages = {91-},
+  title = {Distinctive Image Features from Scale-Invariant Keypoints},
+  volume = {60},
+  journal = {International Journal of Computer Vision},
+  doi = {10.1023/B:VISI.0000029664.99615.94}
+}
+
+
+@article{10.1145/358669.358692,
+author = {Fischler, Martin A. and Bolles, Robert C.},
+title = {Random sample consensus: a paradigm for model fitting with applications to image analysis and automated cartography},
+year = {1981},
+issue_date = {June 1981},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {24},
+number = {6},
+issn = {0001-0782},
+url = {https://doi.org/10.1145/358669.358692},
+doi = {10.1145/358669.358692},
+abstract = {A new paradigm, Random Sample Consensus (RANSAC), for fitting a model to experimental data is introduced. RANSAC is capable of interpreting/smoothing data containing a significant percentage of gross errors, and is thus ideally suited for applications in automated image analysis where interpretation is based on the data provided by error-prone feature detectors. A major portion of this paper describes the application of RANSAC to the Location Determination Problem (LDP): Given an image depicting a set of landmarks with known locations, determine that point in space from which the image was obtained. In response to a RANSAC requirement, new results are derived on the minimum number of landmarks needed to obtain a solution, and algorithms are presented for computing these minimum-landmark solutions in closed form. These results provide the basis for an automatic system that can solve the LDP under difficult viewing},
+journal = {Commun. ACM},
+month = jun,
+pages = {381–395},
+numpages = {15},
+keywords = {scene analysis, model fitting, location determination, image matching, camera calibration, automated cartography}
+}

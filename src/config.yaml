@@ -1,11 +1,11 @@
 paths:
-  input_clip_path: "data/clips/clip_1.mp4"
+  input_clip_path: "data/clips/clip_2.mp4"
   template_pin_path: "./data/templates/template_pin_real.png"
-  output_rectified_lane_path: "output/rectified_lane.png"
-  output_rectified_lane_with_trajectory_path: "output/rectified_lane_with_points.png"
-  ball_trajectory_data_path: "src/ball_detection/postprocessing_output/postprocessed_clip_1.json"
+  output_rectified_lane_path: "output/rectified_lane_clip_2.png"
+  output_rectified_lane_with_trajectory_path: "output/rectified_lane_with_points_clip_2.png"
+  ball_trajectory_data_path: "src/ball_detection/postprocessing_output/postprocessed_clip_2.json"
   board_template_path: "data/templates/board_tracking.jpg"
-  output_combined_trajectory_video_path: "output/combined_trajectory_video.mp4"
+  output_combined_trajectory_video_path: "output/combined_trajectory_video_clip_2.mp4"
   debug_dir_path: "debug"
 points:
   lane_center_point: [1100, 540]
@@ -14,11 +14,11 @@ lane_detection:
   bottom:
     edge_threshold: 30
     edge_method: "sobel"
-    conv_method: "r_g_minus_b"
+    conv_method: "default"
   lateral:
     edge_threshold: 30
     edge_method: "sobel"
-    conv_method: "r_g_minus_b"
+    conv_method: "default"
     direction: "vertical"
   top:
     mode: "bottom"

@@ -10,10 +10,10 @@ def custom_grayscale(frame, method="default"):
         return cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     elif method == "lightness":
         return cv2.cvtColor(frame, cv2.COLOR_BGR2HLS)[:, :, 1]
-    elif method == "luminosity":
-        return cv2.cvtColor(frame, cv2.COLOR_BGR2YUV)[:, :, 0]
+    elif method == "hue":
+        return cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)[:, :, 0]
     elif method == "r_g_minus_b":
-        r, g, b = cv2.split(frame)
+        b, g, r = cv2.split(frame)
         return cv2.subtract(cv2.add(r, g), b)
     elif method == "pca":
         pixels = frame.reshape(-1, 3)
