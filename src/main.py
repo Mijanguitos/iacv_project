@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+from pathlib import Path
 from lane_detection.lane_detection import (
     get_bottom_lane_boundary,
     get_top_lane_boundary,
@@ -8,6 +9,7 @@ from lane_detection.lane_detection import (
 )
 from rectification.lane_rectification import rectify_bowling_lane
 from utils.plot_utils import plot_lane_boundaries, plot_points
+from utils.testing_utils import parameter_search, run_all_videos
 from utils.utils import load_config, load_json, obtain_corners_from_image
 from utils.video_utils import (
     create_3d_bowling_visualization,
@@ -31,6 +33,9 @@ def main():
         print("Failed to read the first frame from the video")
         return
 
+    ## Visualization of different methods for lane boundary detection
+    run_all_videos()
+    
     ## 1. Lane Detection
     # 1.1 Detect bottom boundary
     bottom_line = get_bottom_lane_boundary(
@@ -41,13 +46,22 @@ def main():
     )
 
     # 1.2 Detect lateral boundaries
+    # Determine lane center for this video. Prefer per-clip override in config,
+    # falling back to the global `lane_center_point`.
+    video_stem = Path(config.paths.input_clip_path).stem
+    lane_center = None
+    if hasattr(config.points, "lane_center_points"):
+        lane_center = getattr(config.points.lane_center_points, video_stem, None)
+    if lane_center is None:
+        lane_center = config.points.lane_center_point
+
     lateral_lines = get_lateral_lane_boundaries(
         frame,
         edge_threshold=config.lane_detection.lateral.edge_threshold,
         edge_method=config.lane_detection.lateral.edge_method,
         conv_method=config.lane_detection.lateral.conv_method,
         direction=config.lane_detection.lateral.direction,
-        lane_center=config.points.lane_center_point,
+        lane_center=lane_center,
     )
 
     # 1.3 Detect top boundary

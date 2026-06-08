@@ -14,7 +14,7 @@ The objective of this stage is to maximize the contrast between relevant lane st
 
 To identify the optimal preprocessing step, several distinct single-channel conversion methods were evaluated.
 
-As a baseline, the standard OpenCV grayscale conversion was tested, which computes a weighted combination of the RGB channels according to perceptual luminance \cite{opencv_color_conversion,gonzalez2008digital}  
+As a baseline, the standard OpenCV grayscale conversion was tested, which computes a weighted combination of the RGB channels according to perceptual luminance \cite{opencv2018colorconversions,gonzalez2008digital}  
 
 \begin{equation}
 Y = 0.299\,R + 0.587\,G + 0.114\,B
@@ -22,10 +22,10 @@ Y = 0.299\,R + 0.587\,G + 0.114\,B
 
 where R, G, and B represent the red, green, and blue image channels, respectively.
 
-An alternative standard structural representation, lightness \cite{opencv_color_conversions}, was also tested to observe if averaging the maximum and minimum color components provided better separability for the lane textures. The lightness channel from the HLS color space is mathematically defined as:
+An alternative standard structural representation, lightness \cite{opencv2018colorconversions}, was also tested to observe if averaging the maximum and minimum color components provided better separability for the lane textures. The lightness channel from the HLS color space is mathematically defined as:
 $$L = \frac{\max(R, G, B) + \min(R, G, B)}{2}$$
 
-Beyond standard conversions, domain-specific approaches were explored. A color transformation inspired by lane detection approaches in the autonomous driving domain \cite{WU20142756}, calculated as
+Beyond standard conversions, domain-specific approaches were explored. A color transformation inspired by lane detection approaches in the autonomous driving domain \cite{wu2014lanemark}, calculated as
 
 \begin{equation}
 I = R + G - B
@@ -33,11 +33,11 @@ I = R + G - B
 
 was evaluated. This transformation emphasizes red and green channel intensities while suppressing the blue channel, theoretically increasing the contrast between bright lane markings and darker road-like surfaces.
 
-To further improve robustness against illumination changes, Principal Component Analysis (PCA) \cite{jolliffe2002principal} was applied. By projecting the RGB channels into a lower-dimensional space and retaining only the first principal component, this method aims to isolate the dominant structural features of the lane regardless of specific lighting conditions.
+To further improve robustness against illumination changes, Principal Component Analysis (PCA) \cite{jolliffe2002principal} was integrated into the preprocessing pipeline. The rationale for this approach was drawn from the field of Earth Observation and remote sensing, where PCA is widely utilized to transform highly correlated multispectral satellite bands into a concise subset of structural predictors \cite{richards2012remote}. By treating the standard RGB video feed as a three-band multispectral image, the color channels were projected into a lower-dimensional space. Retaining only the first principal component mathematically maximizes the statistical variance of the scene. This data-driven projection effectively isolates the dominant physical structures of the environment while naturally suppressing correlated noise like shadows, surface reflections, and ambient lighting artifacts.
 
 Finally, to assess whether boundary transitions could be isolated strictly through chromaticity rather than intensity, the hue channel from the HSV color space was evaluated.
 
-To determine the most robust approach for the final pipeline, the five single-channel transformations were systematically evaluated against various edge detectors (Sobel\cite{sobel}, Canny\cite{canny1986computational}, and Laplacian\cite{laplacian}) to measure their impact on boundary localization. Preliminary evaluations indicated that the default grayscale conversion, when paired with a Sobel filter, provided the most robust and consistent boundary localization across the varying illumination conditions of the dataset. The detailed quantitative analysis and discussion of this evaluation are presented in RESULTS SECTION(CITAR). Consequently, the default grayscale transformation paired with Sobel edge detection was selected as the foundational preprocessing step for the lane detection architecture.
+To determine the most robust approach for the final pipeline, the five single-channel transformations were systematically evaluated against various edge detectors (Sobel\cite{sobel1973isotropic}, Canny\cite{canny1986computational}, and Laplacian\cite{marr1980edgedetection}) to measure their impact on boundary localization. Preliminary evaluations indicated that PCA, when paired with a Sobel filter, provided the most robust and consistent boundary localization across the varying illumination conditions of the dataset. The detailed quantitative analysis and discussion of this evaluation are presented in section \ref{sec:comparative_analysis}. Consequently, the PCA transformation paired with Sobel edge detection was selected as the foundational preprocessing step for the lane detection architecture.
 
 
 \subsubsection{Image smoothing}
@@ -57,7 +57,7 @@ The Laplacian operator is a second-order derivative method that detects regions 
 All three methods were implemented and evaluated across multiple bowling videos. Based on qualitative performance and stability of the resulting edge maps, the Sobel operator was selected as the primary edge detector for the proposed pipeline. Depending on the boundary being estimated, the gradient direction is adapted to emphasize either horizontal or vertical structures, improving the extraction of relevant lane edges prior to line fitting.
 
 \subsubsection{Line extraction using the Hough transform}
-Following edge detection, candidate line segments corresponding to lane boundaries are extracted using the probabilistic Hough transform \cite{probabilistic_hough}. The Hough transform \cite{Duda1972UseOT} is particularly suitable for lane detection tasks, as it enables robust identification of line structures even when edges are fragmented or partially incomplete. The method operates by mapping edge points from the image space into a parametric representation of lines. Since infinitely many lines may pass through a given image point, each edge pixel votes for all compatible line hypotheses in the parameter space. Line candidates receiving strong consensus from multiple edge points accumulate higher votes and are identified as probable geometric structures.
+Following edge detection, candidate line segments corresponding to lane boundaries are extracted using the probabilistic Hough transform \cite{matas2000probabilistic}. The Hough transform \cite{Duda1972UseOT} is particularly suitable for lane detection tasks, as it enables robust identification of line structures even when edges are fragmented or partially incomplete. The method operates by mapping edge points from the image space into a parametric representation of lines. Since infinitely many lines may pass through a given image point, each edge pixel votes for all compatible line hypotheses in the parameter space. Line candidates receiving strong consensus from multiple edge points accumulate higher votes and are identified as probable geometric structures.
 In this work, the probabilistic Hough transform (HoughLinesP) is employed. Unlike the standard Hough transform, which returns infinite lines represented in polar form $(\rho,\theta)$, the probabilistic formulation directly estimates finite line segments defined by their endpoints $(x_1, y_1, x_2, y_2)$. This representation is particularly advantageous for the proposed pipeline, as subsequent processing relies on geometric properties such as segment orientation, intersections, and proximity to expected lane locations. Additionally, the probabilistic formulation reduces computational cost by operating on a subset of edge points while maintaining robust detection performance.
 The resulting line candidates are further filtered according to geometric constraints consistent with the expected lane structure. In particular, line orientation is used to reject candidates that deviate substantially from the expected direction of the corresponding lane boundary. Since multiple plausible line hypotheses may still remain, additional boundary-specific heuristics are introduced in later stages of the pipeline to determine the final lane borders.
 
@@ -80,14 +80,14 @@ This heuristic effectively resolves the ambiguity introduced by multiple paralle
 
 
 \subsubsection{Top boundary detection}
-The top boundary of the bowling lane presents a fundamentally different challenge compared to the other lane borders, as it is frequently occluded by bowling pins. This occlusion breaks the continuity of the lane marking and makes classical edge-based or line-based methods such as the Hough transform unreliable. Additionally, feature-based approaches such as Scale Invariant Feature Transform (SIFT)\cite{SIFT} were considered but found to be ineffective due to the small size of the pins in the image and the limited number of stable keypoints they generate at the typical camera distance.
+The top boundary of the bowling lane presents a fundamentally different challenge compared to the other lane borders, as it is frequently occluded by bowling pins. This occlusion breaks the continuity of the lane marking and makes classical edge-based or line-based methods such as the Hough transform unreliable. Additionally, feature-based approaches such as Scale Invariant Feature Transform (SIFT)\cite{lowe2004sift} were considered but found to be ineffective due to the small size of the pins in the image and the limited number of stable keypoints they generate at the typical camera distance.
 
 To address these limitations, a template matching-based approach is adopted, leveraging prior knowledge of the approximate appearance and scale of bowling pins. The method searches for occurrences of a pin template within the upper region of the frame, where pins are expected to appear.
 Since the apparent size of pins varies across videos due to perspective and camera distance, a multi-scale search strategy is applied. The template is resized across a range of scales, and matching is performed at each scale independently. This increases robustness to variations in pin size and improves detection consistency across different recordings.
 
 After matching, multiple overlapping detections are typically produced for the same physical pin. To remove redundant detections, non-maximum suppression is applied, retaining only the most confident bounding boxes. From each remaining detection, representative keypoints are extracted, corresponding either to the center or the lower portion of the bounding box, depending on the selected configuration.
 
-Given that template matching can still produce false positives in visually similar regions, a robust geometric fitting stage is applied. The extracted keypoints are first filtered using Random Sample Consensus (RANSAC)\cite{10.1145/358669.358692} regression to remove outliers. A final first-order polynomial is then fitted to the inlier points using least squares, resulting in a continuous estimate of the top lane boundary.
+Given that template matching can still produce false positives in visually similar regions, a robust geometric fitting stage is applied. The extracted keypoints are first filtered using Random Sample Consensus (RANSAC)\cite{fischler1981ransac} regression to remove outliers. A final first-order polynomial is then fitted to the inlier points using least squares, resulting in a continuous estimate of the top lane boundary.
 
 \subsubsection{Lane boundary integration and corner estimation}
 Once the bottom, lateral, and top lane boundaries are estimated independently, they are combined to recover a consistent geometric representation of the bowling lane. Since each boundary is represented as a line segment in image space, the lane corners can be obtained by computing the pairwise intersections between adjacent boundaries.

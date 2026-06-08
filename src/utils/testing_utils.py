@@ -292,6 +292,16 @@ def process_video(
     if top_line is None:
         print(f"Warning: top boundary failed for video {video_path}")
 
+    # Determine lane center for this video. Prefer per-clip override in config,
+    # falling back to the global `lane_center_point`.
+    video_stem = video_path.stem
+    lane_center = None
+    if hasattr(config.points, "lane_center_points"):
+        # `lane_center_points` is loaded as a SimpleNamespace, so use getattr
+        lane_center = getattr(config.points.lane_center_points, video_stem, None)
+    if lane_center is None:
+        lane_center = config.points.lane_center_point
+
     for gray_method in grayscale_methods:
         for edge_method in edge_methods:
             combo_output = output_root / f"{gray_method}_{edge_method}"
@@ -299,7 +309,7 @@ def process_video(
             bottom_line, lateral_lines = process_method(
                 frame,
                 template,
-                config.points.lane_center_point,
+                lane_center,
                 gray_method,
                 edge_method,
                 combo_output,

@@ -1,24 +1,28 @@
 paths:
-  input_clip_path: "data/clips/clip_2.mp4"
+  input_clip_path: "data/clips/clip_11.mp4"
   template_pin_path: "./data/templates/template_pin_real.png"
-  output_rectified_lane_path: "output/rectified_lane_clip_2.png"
-  output_rectified_lane_with_trajectory_path: "output/rectified_lane_with_points_clip_2.png"
+  output_rectified_lane_path: "output/rectified_lane_clip_11.png"
+  output_rectified_lane_with_trajectory_path: "output/rectified_lane_with_points_clip_11.png"
   ball_trajectory_data_path: "src/ball_detection/postprocessing_output/postprocessed_clip_2.json"
   board_template_path: "data/templates/board_tracking.jpg"
-  output_combined_trajectory_video_path: "output/combined_trajectory_video_clip_2.mp4"
+  output_combined_trajectory_video_path: "output/combined_trajectory_video_clip_11.mp4"
   debug_dir_path: "debug"
 points:
   lane_center_point: [1100, 540]
+  # Per-clip overrides. Keys are video stems (filename without extension).
+  lane_center_points:
+    clip_12: [500, 1000]
+    clip_13: [1000, 540]
 
 lane_detection:
   bottom:
     edge_threshold: 30
     edge_method: "sobel"
-    conv_method: "default"
+    conv_method: "pca"
   lateral:
     edge_threshold: 30
     edge_method: "sobel"
-    conv_method: "default"
+    conv_method: "pca"
     direction: "vertical"
   top:
     mode: "bottom"
