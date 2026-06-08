@@ -5,7 +5,7 @@ import os
 
 # Custom modules
 import preprocessing
-import detection
+import candidate_detection
 import postprocessing
 import visualization
 
@@ -33,7 +33,7 @@ def ball_detection(lane_points: np.ndarray,
     preprocessing.video_preprocessing(video_path, preprocessing_path, lane_points)
 
     # Call detection module for bowling ball candidate detection
-    detection.candidate_detection(preprocessing_path, detection_path)
+    candidate_detection.candidate_detection(preprocessing_path, detection_path)
 
     # Call post-processing module to get the ball's trajectory
     postprocessing.compute_trajectory(detection_path, postprocessing_path)
@@ -48,14 +48,18 @@ if __name__ == "__main__":
     #lane_points = np.array([[872, 684], [1228, 696], [1241, 277], [1146, 273]]) # For clip 1
     #lane_points = [[819, 813], [1308, 819] , [1442, 175], [1254, 175]] # For clip 2
     #lane_points = np.array([[608, 983], [1186, 1016], [1259, 350], [1131, 344]]) # For clip 7
-    lane_points = np.array([[608, 983], [1185, 1016], [1258, 354], [1129, 347]]) # For clip 5
+    #lane_points = np.array([[608, 983], [1185, 1016], [1258, 354], [1129, 347]]) # For clip 5
+
+    #lane_points = np.array([[390, 861], [1085, 878], [1148, 222],  [979, 221]]) # For clip 13
+
+    lane_points = np.array([[266, 1048], [1043, 1048], [1103, 169], [912, 171]]) # For clip 11
     
-    clip = "clip_5"
+    clip = "clip_11"
     
     PROJECT_ROOT = Path().resolve()
     print(f"Project Root: {PROJECT_ROOT}")
 
-    extension = ".mov"
+    extension = ".mp4"
     video_path = f"data\\clips\\{clip}{extension}"
     ball_path = f"{PROJECT_ROOT}\\src\\ball_detection\\"
     preprocessing_path = f"{ball_path}preprocessing_output\\preprocessed_{clip}"
