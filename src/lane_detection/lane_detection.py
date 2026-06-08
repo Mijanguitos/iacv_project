@@ -214,12 +214,15 @@ def get_lateral_lane_boundaries(
     hough_max_line_gap=10,
     direction="vertical",
     lane_center=None,
+    crop_region=[0.15, 0.9, 0.0, 1.0],
 ):
     blurred = preprocess_frame(frame, conv_method=conv_method)
 
-    # no cropping for lateral edges
+    # crop to remove top and bottom regions
+    cropped, top, left = crop_by_ratio(blurred, crop_region)
+    
     edges = detect_edges(
-        blurred,
+        cropped,
         method=edge_method,
         conv_method=conv_method,
         edge_threshold=edge_threshold,
@@ -236,7 +239,7 @@ def get_lateral_lane_boundaries(
         maxLineGap=hough_max_line_gap,
     )
 
-    output = frame.copy()
+    output, _, _ = crop_by_ratio(frame.copy(), crop_region)
 
     if lane_center is None:
         raise ValueError("lane_center must be provided for lateral boundary detection")
@@ -253,8 +256,12 @@ def get_lateral_lane_boundaries(
             m = (y2 - y1) / (x2 - x1)
             if abs(m) < 1:
                 continue
+            # Convert cropped coordinates to full frame for distance calculation
+            full_x1, full_y1, full_x2, full_y2 = get_true_coords(
+                line[0], crop_region=[top, left]
+            )
             dist, intersection_x = calculate_distance_to_center(
-                line[0], center_x, center_y
+                [full_x1, full_y1, full_x2, full_y2], center_x, center_y
             )
 
             # Determine side based on avg_x
@@ -262,19 +269,19 @@ def get_lateral_lane_boundaries(
                 # left side: pick the line with the smallest distance to center
                 if dist < min_left_dist:
                     min_left_dist = dist
-                    left_candidate = line[0]
+                    left_candidate = [full_x1, full_y1, full_x2, full_y2]
             else:
                 # right side: pick the line with the smallest distance to center
                 if dist < min_right_dist:
                     min_right_dist = dist
-                    right_candidate = line[0]
+                    right_candidate = [full_x1, full_y1, full_x2, full_y2]
 
             cv2.line(output, (x1, y1), (x2, y2), (0, 255, 0), 2)
             pos_lines += 1
 
     cv2.circle(
-        output, (int(center_x), int(center_y)), 5, (255, 0, 0), -1
-    )  # Mark the center point
+        output, (int(center_x - left), int(center_y - top)), 5, (255, 0, 0), -1
+    )  # Mark the center point in cropped coordinates
     cv2.imwrite(
         os.path.join(LINES_DIR, f"lateral_lines_{conv_method}_{edge_method}.png"),
         output,
@@ -287,9 +294,9 @@ def get_lateral_lane_boundaries(
             continue
         vis = frame.copy()
         x1, y1, x2, y2 = line
-        cv2.line(vis, (x1, y1), (x2, y2), (0, 255, 0), 3)
+        cv2.line(vis, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 3)
         filename = f"lateral_best_{side}_line_" f"{conv_method}_{edge_method}.png"
-        cv2.imwrite(os.path.join(BEST_DIR, filename),vis)
+        cv2.imwrite(os.path.join(BEST_DIR, filename), vis)
 
     return left_candidate, right_candidate
 
