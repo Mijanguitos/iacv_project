@@ -155,6 +155,6 @@ if __name__ == "__main__":
     save_path = f"preprocessing_output\\preprocessed_{video_path}"
     lane_points = np.array([[819, 813], [1308, 819] , [1442, 175], [1254, 175]])
 
-    modified_polygon = compute_modified_polygon(lane_points, 15, 20)
+    modified_polygon = compute_modified_polygon(lane_points, 100, 20)
 
     video_preprocessing(video_path, save_path, lane_points)

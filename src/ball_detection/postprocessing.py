@@ -42,8 +42,8 @@ def create_graph(ball_candidates: dict) -> nx.DiGraph:
     # Pre-loop setup
     node_ids_by_frame = {} # Dictionary to store {frame_index: [list_of_node_ids]}
     ball_count = 0
-    window_size = 5 # How many frames back to look
-    max_distance = 40  # Maximum pixels a ball can move between frames
+    window_size = 10 # How many frames back to look
+    max_distance = 70  # Maximum pixels a ball can move between frames
 
     for frame in range(n_frames):
         if ball_candidates[str(frame)] is not None:
@@ -66,17 +66,22 @@ def create_graph(ball_candidates: dict) -> nx.DiGraph:
                     # Check if we have nodes recorded for that previous frame
                     if prev_frame in node_ids_by_frame:
                         for prev_node_id in node_ids_by_frame[prev_frame]:
-                        # Get position of the previous ball
+                            # Get position of the previous ball
                             prev_pos = DG.nodes[prev_node_id]['pos']
                             
                             # Calculate Euclidean Distance
-                            #dist = np.linalg.norm(curr_pos - prev_pos)
                             squared_diffs = (curr_pos - prev_pos) ** 2
                             sum_squared = np.sum(squared_diffs)
                             dist = np.sqrt(sum_squared)
                                                         
-                            # 3. Only connect if the movement is realistic
-                            if dist < max_distance and dist != 0.00:
+                            # --- DIRECTIONAL FILTER ---
+                            # In OpenCV, Y=0 is the top of the screen. 
+                            # Moving "forward" down the lane means Y must decrease.
+                            # We use +2 pixels of tolerance for bounding box jitter.
+                            is_moving_forward = curr_pos[1] <= (prev_pos[1] + 2)
+                            
+                            # 3. Only connect if the movement is realistic AND moving forward
+                            if dist < max_distance and dist != 0.00 and is_moving_forward:
                                 DG.add_edge(prev_node_id, ball_count, weight=dist)
                                 #print(f"Connected: Frame {prev_frame}->{frame} (Dist: {dist:.2f})")
 
@@ -164,6 +169,42 @@ def interpolation(data: np.ndarray, frames: np.ndarray, degree: int) -> np.ndarr
 
     return est_x
 
+def logarithmic_interpolation(data: np.ndarray, frames: np.ndarray) -> np.ndarray:
+    """
+    Perform Logarithmic Least Squares Interpolation.
+    Fits the curve r = A * ln(f_shifted) + B.
+    
+    Args:
+        data (np.ndarray): Array containing radius values.
+        frames (np.ndarray): Array containing frame indices.
+        
+    Returns:
+        np.ndarray: Logarithmically interpolated radius values.
+    """
+    # 1. Shift frames to ensure strictly positive inputs for the natural log
+    # We subtract (first_frame - 1) so the timeline always starts exactly at 1.
+    f_shift = frames[0] - 1
+    x_shifted = frames - f_shift 
+    
+    # 2. Transform the X-axis (frames) into log scale
+    ln_x = np.log(x_shifted)
+    
+    # 3. Setup the design matrix for a linear fit: [ln(x), 1]
+    A_matrix = np.vstack([ln_x, np.ones(len(ln_x))]).T
+    
+    # 4. Solve for the multiplier (A) and intercept (B) using Least Squares
+    A, B = np.linalg.lstsq(A_matrix, data, rcond=None)[0]
+    
+    # 5. Generate the target timeline and shift it identically
+    f_full = np.arange(frames[0], frames[-1])
+    f_full_shifted = f_full - f_shift
+    
+    # 6. Reconstruct the logarithmic curve over the full timeline
+    est_data = A * np.log(f_full_shifted) + B
+    
+    return est_data
+
+
 def spline_interpolation(data: np.ndarray, frames: np.ndarray) -> np.ndarray:
     cs = CubicSpline(frames, data, bc_type='natural')
     f = np.arange(frames[0], frames[-1])
@@ -197,11 +238,15 @@ def compute_trajectory(candidates_path: os.PathLike[str],
     
     #x_int = interpolation(x, frames, 4)
     x_int = spline_interpolation(x, frames)
-    x_int = gaussian_filter(x_int, sigma=2)
+    x_int = gaussian_filter(x_int, sigma=3)
     #y_int = interpolation(y, frames, 4)
     y_int = spline_interpolation(y, frames)
-    y_int = gaussian_filter(y_int, sigma=2)
-    r_int = interpolation(r, frames, 3)
+    y_int = gaussian_filter(y_int, sigma=3)
+    
+    #r_int = exponential_interpolation(r, frames)   
+    #r_int = spline_interpolation(r, frames)
+    r_int = logarithmic_interpolation(r, frames)
+
     f = np.arange(frames[0], frames[-1])
 
 
