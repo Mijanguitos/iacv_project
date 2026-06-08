@@ -5,6 +5,13 @@ Mohamed Aly.
 \newblock Real time detection of lane markers in urban streets.
 \newblock {\em CoRR}, abs/1411.7113, 2014.
 
+\bibitem{BOUGUET00}
+J.-Y. Bouguet.
+\newblock Pyramidal implementation of the lucas kanade feature tracker
+  description of the algorithm.
+\newblock Intel corporation microprocessor research labs report, Intel
+  Corporation, 2000.
+
 \bibitem{BRADSKI08}
 G.~Bradski and A.~Kaehler.
 \newblock {\em Learning OpenCV: Computer Vision with the OpenCV Library}.
@@ -121,6 +128,12 @@ V.~Pallavi, J.~Mukherjee, A.~K. Majumdar, and S.~Sural.
   features.
 \newblock {\em Journal of Visual Communication and Image Representation},
   19(7):426--436, 2008.
+
+\bibitem{SHI94}
+J.~Shi and C.~Tomasi.
+\newblock Good features to track.
+\newblock In {\em 1994 Proceedings of IEEE Conference on Computer Vision and
+  Pattern Recognition}, pages 593--600, June 1994.
 
 \bibitem{sobel}
 Irwin Sobel and Gary Feldman.

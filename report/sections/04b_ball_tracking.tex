@@ -13,3 +13,56 @@ This algorithm efficiently detects circles across video frames; however, it may 
 The main idea is that each ball candidate in a frame is represented by a graph node, which is then directionally connected to all other candidates in the five subsequent frames. This is done because the previous step might miss the ball in consecutive frames. In the end, the longest path in the graph is retrieved, which represents the actual ball trajectory. To fill in the missing frames in the trajectory, cubic spline interpolation is applied to both the x- and y-center coordinates, followed by a light Gaussian filter ($\sigma = 5$) to eliminate noise, and a simple quadratic least squares interpolation for the radius values.
 
 The entire workflow yields the final dataset, which contains the coordinates and radius of each circle from the first to the last detected frame of the clip. This data will be crucial for the following steps in spin detection and 3D reconstruction.
+
+\subsubsection{Spin detection}
+
+Once we have defined the bounding box, we select the trackable features on the ball’s surface. To compute optical flow, we identify points in the first image that are sufficiently distinct so they can be located again in the next image. OpenCV provides a pipeline based on the Shi-Tomasi corner detection algorithm \cite{SHI94}. Instead of relying solely on edge information, which captures gradient changes in a single direction, the algorithm seeks regions with significant intensity variation in two orthogonal directions. It computes the first-order image gradients, $I_x$ and $I_y$, using a 3x3 Sobel kernel, which represent the rate of change of brightness in the horizontal and vertical directions. These gradients are then used to compute the \emph{structure tensor} (or second-moment matrix) $M$ over a window function $w$ that captures the spatial context around a pixel:
+
+\begin{equation}
+	M = \sum_{x,y}w(x, y) 
+\begin{bmatrix} 
+	I^2_x & I_x I_y \\
+	I_x I_y & I^2_y
+\end{bmatrix}
+\end{equation}
+
+The structure tensor is a covariance matrix of the image gradients. Its eigenvalues $\lambda_1$ and $\lambda_2$ are the intensity change in each direction. If both are small, the region is flat; if one is larger than the other, it represents an edge; and if both are large, we have found the so-called corner, where there is a strong intensity change in both orthogonal directions. Corners typically represent the best trackable features for the optical flow. In this context, the intensity changes must be detected solely on the ball’s surface. Hence, the importance of the ball not having a homogeneous texture. We finally end up with an array of pixel locations that hopefully will be found in the next frame.
+
+With the initial features detected, we approach their displacement between consecutive frames using the \emph{Pyramidal Lucas-Kanade} (PyLK) optical flow algorithm \cite{BOUGUET00}. The standard Lucas-Kanade algorithm rests on three core assumptions about the scene: brightness constancy, spatial coherence, and temporal persistence. The first implies that the brightness of tracked pixels does not change between frames. Spatial coherence means that neighboring points in a scene belong to the same surface and have similar motion. The last assumption is that features move relatively small distances between consecutive frames, as it relies only on a local window of information \cite{BRADSKI08}. The latter, however, conflicts with the behavior of the spinning ball: the ball’s rotational speed causes features to move noticeably between frames.
+
+We want to determine the velocity vectors that indicate how far the feature has moved in the $x$ and $y$ directions. The brightness constancy tells us that the pixel intensity $I(x, y, t)$ at a specific point on the bowling ball does not change as the ball moves to a new position in the next frame:
+
+\begin{equation}
+I(x, y, t) = I(x + \delta x, y + \delta y, t + 1)
+\end{equation}
+
+By linearizing, we obtain the \emph{standard optical flow equation}:
+
+\begin{equation}
+I_xu + I_yv = -I_t
+\end{equation}
+
+, where $I_t$ is the difference in pixel intensity between frames, $I_x$ and $I_y$ are the spatial image gradients (computed in the feature detection), and $u$ and $v$ are the unknown velocity vectors. However, as we have a single equation for two unknowns, it cannot be solved with a single pixel. The solution takes advantage of the spatial coherence assumption: the optical flow is calculated for all the pixels around the feature for which we can build a system solvable by least-squares minimization:
+
+\begin{equation}
+    \overset{A}{\
+    \begin{bmatrix}
+        I_x(p_1) & I_y(p_1) \\
+        I_x(p_2) & I_y(p_2) \\
+        \vdots & \vdots \\
+        I_x(p_n) & I_y(p_n)
+    \end{bmatrix}}_{[n\times 2]}
+    \overset{x}{\
+    \begin{bmatrix}
+        u \\
+        v \\
+    \end{bmatrix}}_{[2\times 1]}=
+    \overset{b}{\
+    \begin{bmatrix}
+        I_t(p_1) \\
+        I_t(p_2) \\
+        \vdots \\
+        I_t(p_n)
+    \end{bmatrix}}_{[n\times 1]}
+\end{equation}
+
