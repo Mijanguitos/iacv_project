@@ -84,6 +84,7 @@ def filter_3d_points(
     ball_radius,
     fb_threshold=10.0,
     low_threshold_factor=5,
+    is_retry=False,  # <-- Added safety flag
 ):
     movement_threshold = ball_radius
     low_movement_threshold = ball_radius / low_threshold_factor
@@ -110,10 +111,10 @@ def filter_3d_points(
     old3d = np.array(old3d)
     new3d = np.array(new3d)
 
-    if old3d.shape[0] < 3:
-        # Retry with more lenient filtering
-        print("Recursive")
-        old3d, new3d, good_pts = filter_3d_points(
+    # If we failed to find 3 points, and we HAVEN'T retried yet, do it once.
+    if old3d.shape[0] < 3 and not is_retry:
+        print(f"Lenient retry triggered (Found {old3d.shape[0]} points)")
+        return filter_3d_points(
             p0,
             p1,
             p0r,
@@ -124,8 +125,10 @@ def filter_3d_points(
             center_roi2,
             ball_radius,
             low_threshold_factor=50,
+            is_retry=True,  # <-- Flag that we are now in the retry loop
         )
 
+    # If we already retried (or succeeded), just return the arrays
     return old3d, new3d, good_pts
 
 def compute_rotation(old3d, new3d):
@@ -226,16 +229,17 @@ def spin_detection(trajectory_path: os.PathLike[str],
                 p0, p1, p0r, s_f, s_b, fb_error = optical_flow(
                     gray1, gray2, mask, r1
                 )
-            except ValueError:
-                print(ValueError)
+            except ValueError as e:
+                print(f"Frame {i} skipped: {e}") # Prints "No features detected"
                 continue
             
             old3d, new3d, good_pts = filter_3d_points(
                 p0, p1, p0r, s_f, s_b, fb_error, center_roi1, center_roi2, r1
             )
             
-            print(i, p0.shape, p1.shape)
-            print(i, old3d.shape, new3d.shape)
+            if old3d.shape[0] < 3:
+                print(f"Frame {i} skipped: Not enough valid 3D points ({old3d.shape[0]})")
+                continue # Abort the rest of the loop and move to the next frame
 
             axis, theta = compute_rotation(old3d, new3d)
 
