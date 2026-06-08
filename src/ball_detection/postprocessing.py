@@ -6,6 +6,7 @@ Retrieves the
 
 from scipy.interpolate import CubicSpline
 from scipy.ndimage import gaussian_filter1d
+import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import networkx as nx
@@ -89,21 +90,81 @@ def create_graph(ball_candidates: dict) -> nx.DiGraph:
                 # Update visualization metadata
                 color_map.append(colors[frame])
                 labels[ball_count] = f"{frame}"
-                positions.append((x_pos, -y_pos))
+                positions.append((frame, -y_pos))                
                 y += 1
                 ball_count += 1
                 
             x += 2
             y = y * (-1)
             
-    nx.draw_networkx_nodes(DG, pos=positions, label=labels, node_color=color_map)
-    nx.draw_networkx_labels(DG, pos=positions, labels=labels)
-    nx.draw_networkx_edges(DG, pos=positions)
-    # Set margins for the axes so that nodes aren't clipped
-    ax = plt.gca()
-    ax.margins(0.20)
-    ax.axis('equal')
-    plt.axis("off")
+
+    # --- Improved Spatiotemporal Visualization ---
+    
+    # 1. Setup the figure
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    # 2. Normalize colors properly for the colormap
+    norm = mcolors.Normalize(vmin=0, vmax=n_frames)
+    cmap = cm.viridis 
+    
+    node_colors = [cmap(norm(DG.nodes[n]['frame'])) for n in DG.nodes]
+
+    # 3. Draw nodes
+    nx.draw_networkx_nodes(
+        DG, 
+        pos=positions, 
+        node_color=node_colors, 
+        node_size=100,         
+        alpha=1,           
+        edgecolors='white',   
+        linewidths=0.5,
+        ax=ax
+    )
+
+    # 4. Draw edges (Heavier and more visible)
+    nx.draw_networkx_edges(
+        DG, 
+        pos=positions, 
+        alpha=0.9,            # Increased opacity
+        width=1.5,            # Thicker lines
+        edge_color="black",    # Distinct color
+        arrows=True,
+        arrowsize=5,         # Larger arrowheads
+        ax=ax
+    )
+
+    # 5. Filter labels (One label per 15th frame)
+    filtered_labels = {}
+    labeled_frames = set()
+    
+    for n in DG.nodes:
+        frame = DG.nodes[n]['frame']
+        if frame % 15 == 0 and frame not in labeled_frames:
+            filtered_labels[n] = str(frame)
+            labeled_frames.add(frame) 
+            
+    # 6. Add a colorbar 
+    sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+    sm.set_array([])
+    cbar = fig.colorbar(sm, ax=ax, label='Frame Number', pad=0.02)
+
+    # 7. Polish the axes (Turned ON for Spatiotemporal layout)
+    ax.set_aspect('auto') # crucial for mixing time and pixel coordinates
+    ax.margins(0.10)
+    #ax.set_title("Ball Candidate Trajectory: Temporal Flow", fontsize=14, pad=15)
+    
+    # Explicitly set axis labels
+    ax.set_xlabel("Frame Number (Time)", fontsize=11, fontweight='bold')
+    ax.set_ylabel("Pixel Y-Coordinate (Depth)", fontsize=11, fontweight='bold')
+    
+    # Keep axes visible and show ticks
+    ax.set_axis_on()
+    ax.tick_params(left=True, bottom=True, labelleft=True, labelbottom=True)
+    
+    # Add a subtle grid to help track values across the span
+    ax.grid(True, linestyle='--', alpha=0.4)
+
+    plt.tight_layout()
     plt.show()
 
     return DG
@@ -136,37 +197,20 @@ def interpolation(data: np.ndarray, frames: np.ndarray, degree: int) -> np.ndarr
     Returns:
         np.ndarray: Interpolated values over the frame's domain.
     """
-
-    # Number of samples
-    n = len(data)
-
-    # Least Squares interpolation
-    # Dependent variable
-    x = data
-
     # Design matrix
-    f = frames
+    f_shift = frames[0]
+    f_shifted = frames - f_shift
+
     #A = np.transpose(np.array([f**3, f**2, f, np.ones(len(f))]))
-    A = np.vander(f, degree)
+    A = np.vander(f_shifted, degree + 1)
 
-    N_inv = np.linalg.inv(A.T @ A)
+    params_x, _, _, _ = np.linalg.lstsq(A, data, rcond=None)
 
-    T = A.T @ x
+    f_full = np.arange(frames[0], frames[-1])
+    f_full_shifted = f_full - f_shift
 
-    params_x = N_inv @ T
-
-    est_x = A @ params_x
-
-    v = x - est_x
-
-    s2 = (v.T @ v)/(n - len(params_x))
-
-    # New design matrix for interpolation
-    f = np.arange(frames[0], frames[-1])
-    #A = np.transpose(np.array([f**3, f**2, f, np.ones(len(f))]))
-    A = np.vander(f, degree)
-
-    est_x = A @ params_x        
+    A_full = np.vander(f_full_shifted, degree + 1)
+    est_x = A_full @ params_x    
 
     return est_x
 
@@ -207,7 +251,7 @@ def logarithmic_interpolation(data: np.ndarray, frames: np.ndarray) -> np.ndarra
 
 
 def spline_interpolation(data: np.ndarray, frames: np.ndarray) -> np.ndarray:
-    cs = CubicSpline(frames, data, bc_type='natural')
+    cs = CubicSpline(frames, data, bc_type='not-a-knot')
     f = np.arange(frames[0], frames[-1])
     est_x = cs(f)
     return est_x
@@ -215,6 +259,70 @@ def spline_interpolation(data: np.ndarray, frames: np.ndarray) -> np.ndarray:
 def gaussian_filter(data: np.ndarray, sigma: float = 5) -> np.ndarray:
     """ Apply Gaussian filter to the 1D data for smoothing."""
     return gaussian_filter1d(data, sigma=sigma)
+
+def remove_outliers(data: np.ndarray, frames: np.ndarray, threshold: float = 3.0) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Removes outliers by detecting sudden, unrealistic jumps in velocity between frames.
+    
+    Args:
+        data (np.ndarray): The 1D array of positions (x, y, or r).
+        frames (np.ndarray): The corresponding frame numbers.
+        threshold (float): Z-score threshold for velocity. Lower is stricter (e.g., 2.0).
+    
+    Returns:
+        tuple: Filtered data array and filtered frames array.
+    """
+    # 1. Calculate frame-to-frame velocity (change in position / change in time)
+    dt = np.diff(frames)
+    dy = np.diff(data)
+    velocity = dy / dt
+    
+    # 2. Duplicate the first velocity to maintain the same array length
+    velocity = np.insert(velocity, 0, velocity[0])
+    
+    # 3. Calculate mean and standard deviation of the velocities
+    mean_v = np.mean(velocity)
+    std_v = np.std(velocity)
+    
+    # Avoid division by zero if the object is perfectly stationary
+    if std_v == 0:
+        return data, frames
+        
+    # 4. Compute Z-scores
+    z_scores = np.abs((velocity - mean_v) / std_v)
+    
+    # 5. Keep only the points where the velocity jump is within the normal distribution
+    mask = z_scores < threshold
+    
+    return data[mask], frames[mask]
+
+def plot_interpolation(frames_raw: np.ndarray, data_raw: np.ndarray, 
+                       frames_interp: np.ndarray, data_interp: np.ndarray, 
+                       title: str = "Interpolated Trajectory", 
+                       ylabel: str = "Position"):
+    """
+    Plots the original raw detections against the smoothed interpolation.
+    """
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    # Plot original raw data as a scatter plot
+    ax.scatter(frames_raw, data_raw, color='gray', alpha=0.6, label='Raw Detections', zorder=2)
+
+    # Plot the interpolated/smoothed data as a continuous line
+    ax.plot(frames_interp, data_interp, color='#1f77b4', linewidth=2.5, label='Smoothed Spline', zorder=3)
+
+    # Formatting for a clean, professional look
+    ax.set_title(title, fontsize=14, pad=15)
+    ax.set_xlabel("Frame Number (Time)", fontsize=11, fontweight='bold')
+    ax.set_ylabel(ylabel, fontsize=11, fontweight='bold')
+    
+    ax.grid(True, linestyle='--', alpha=0.4, zorder=1)
+    ax.legend(loc='best', fontsize=10)
+    
+    # Tighten up the layout
+    ax.margins(0.05)
+    plt.tight_layout()
+    plt.show()
 
 def compute_trajectory(candidates_path: os.PathLike[str],
                        save_path: os.PathLike[str]) -> dict:
@@ -237,18 +345,50 @@ def compute_trajectory(candidates_path: os.PathLike[str],
                     "r": r.tolist(),
                     "f": frames.tolist()}
     
-    #x_int = interpolation(x, frames, 4)
-    x_int = spline_interpolation(x, frames)
-    x_int = gaussian_filter(x_int, sigma=3)
+    x, frames_x = remove_outliers(x, frames)
+    y, frames_y = remove_outliers(y, frames)
+    r, frames_r = remove_outliers(r, frames)
+    
+    x_int = interpolation(x, frames, 4)
+    #x_int = spline_interpolation(x, frames)
+    #x_int = gaussian_filter(x_int, sigma=3)
     #y_int = interpolation(y, frames, 4)
-    y_int = spline_interpolation(y, frames)
-    y_int = gaussian_filter(y_int, sigma=3)
+    #y_int = spline_interpolation(y, frames)
+    y_int = interpolation(y, frames, 4)
+    #y_int = gaussian_filter(y_int, sigma=3)
     
     #r_int = exponential_interpolation(r, frames)   
     #r_int = spline_interpolation(r, frames)
     r_int = logarithmic_interpolation(r, frames)
 
     f = np.arange(frames[0], frames[-1])
+
+    plot_interpolation(
+        frames_raw=frames, 
+        data_raw=y, 
+        frames_interp=f, 
+        data_interp=y_int, 
+        title="Smoothed Y-Coordinate Trajectory", 
+        ylabel="Pixel Y-Coordinate (Depth)"
+    )
+
+    plot_interpolation(
+        frames_raw=frames, 
+        data_raw=x, 
+        frames_interp=f, 
+        data_interp=x_int, 
+        title="Smoothed X-Coordinate Trajectory", 
+        ylabel="Pixel X-Coordinate"
+    )
+
+    plot_interpolation(
+        frames_raw=frames, 
+        data_raw=r, 
+        frames_interp=f, 
+        data_interp=r_int, 
+        title="Smoothed Radius Trajectory", 
+        ylabel="Ball Radius (Pixels)"
+    )
 
 
     estimations = {"x": x_int.tolist(), 

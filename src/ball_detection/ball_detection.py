@@ -30,10 +30,10 @@ def ball_detection(lane_points: np.ndarray,
     """
 
     # Call preprocessing module to prepara the clip for ball detection    
-    preprocessing.video_preprocessing(video_path, preprocessing_path, lane_points)
+    #preprocessing.video_preprocessing(video_path, preprocessing_path, lane_points)
 
     # Call detection module for bowling ball candidate detection
-    candidate_detection.candidate_detection(preprocessing_path, detection_path)
+    #candidate_detection.candidate_detection(preprocessing_path, detection_path)
 
     # Call post-processing module to get the ball's trajectory
     postprocessing.compute_trajectory(detection_path, postprocessing_path)
@@ -50,9 +50,9 @@ if __name__ == "__main__":
     #lane_points = np.array([[608, 983], [1186, 1016], [1259, 350], [1131, 344]]) # For clip 7
     #lane_points = np.array([[608, 983], [1185, 1016], [1258, 354], [1129, 347]]) # For clip 5
 
-    #lane_points = np.array([[390, 861], [1085, 878], [1148, 222],  [979, 221]]) # For clip 13
+    lane_points = np.array([[390, 861], [1085, 878], [1148, 222],  [979, 221]]) # For clip 13
 
-    lane_points = np.array([[266, 1048], [1043, 1048], [1103, 169], [912, 171]]) # For clip 11
+    #lane_points = np.array([[266, 1048], [1043, 1048], [1103, 169], [912, 171]]) # For clip 11
     
     clip = "clip_11"
     
