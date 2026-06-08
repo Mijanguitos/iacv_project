@@ -6,3 +6,7 @@ While the proposed lane detection pipeline demonstrates robustness across variou
 
 
 Another limitation of the current 3D reconstruction stems from the planar assumption of the homography mapping, which mathematically restricts all tracked points to the floor plane (Z = 0). Consequently, if a bowler lofts the ball, the airborne pixel coordinates would be erroneously projected further down the lane, generating artificial spikes in the calculated spatial trajectory and velocity. To resolve this limitation, future research could evaluate the integration of physics-based motion priors to accurately estimate the ball's vertical height prior to surface contact.
+
+
+
+Lastly, the system is constrained by the assumption of a static camera feed. Any camera movement would break the lane detection, trajectory detection, 3d reconstruction and spin detection modules, due to their underlying static hypothesis. To adapt the system for dynamic recording environments, subsequent research could explore frame-by-frame homography estimation or camera tracking algorithms to decouple sensor movements from the ball’s actual trajectory and spin metrics
