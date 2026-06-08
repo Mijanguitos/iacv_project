@@ -23,6 +23,17 @@ def roi_bounds(x1: int, y1: int,
     
     return x_min, x_max, y_min, y_max
 
+
+# Define a single roi based on the radius of the first ball 
+def roi_bounds_single(x: int, y: int, r: int, frame_shape:tuple, offset: int):
+    x_min = max(0, x - r - offset)
+    x_max = min(frame_shape[1] - 1, x + r + offset)
+    y_min = max(0, y - r - offset)
+    y_max = min(frame_shape[0] - 1, y + r + offset)
+    
+    return x_min, x_max, y_min, y_max
+
+
 def frame_preprocessing(frame: cv2.typing.MatLike):
     # Create CLAHE object (localized histogram equalization)
     clahe = cv2.createCLAHE(clipLimit = 2.5,
@@ -112,7 +123,7 @@ def filter_3d_points(
             center_roi1,
             center_roi2,
             ball_radius,
-            low_threshold_factor=20,
+            low_threshold_factor=50,
         )
 
     return old3d, new3d, good_pts
@@ -184,19 +195,28 @@ def spin_detection(trajectory_path: os.PathLike[str],
             x_min, x_max, y_min, y_max = roi_bounds(x1, y1, x2, y2,
                                                     r1, frame1.shape,
                                                     offset=2)
-            
+
+            x_min, x_max, y_min, y_max = roi_bounds_single(x1, y1, r1, frame1.shape, offset=2)                                                        
             roi1 = frame1[y_min:y_max, x_min:x_max]
-            roi2 = frame2[y_min:y_max, x_min:x_max]
+
+            # Shift the second ROI to be centered on the second ball position
+            # the rois need to be the same shape
+            x_min2, x_max2, y_min2, y_max2 = roi_bounds_single(x2, y2, r1, frame2.shape, offset=2)
+
+            roi2 = frame2[y_min2:y_max2, x_min2:x_max2]
+
+            print(roi1.shape, roi2.shape)
+
             # Compute center in ROI coordinates
             center_roi1 = np.array([x1 - x_min, y1 - y_min])
-            center_roi2 = np.array([x2 - x_min, y2 - y_min])
+            center_roi2 = np.array([x2 - x_min2, y2 - y_min2])
 
             gray1 = cv2.cvtColor(roi1, cv2.COLOR_BGR2GRAY)
             gray2 = cv2.cvtColor(roi2, cv2.COLOR_BGR2GRAY)
 
             # Gray frame preprocessing
-            gray1 = frame_preprocessing(gray1)
-            gray2 = frame_preprocessing(gray2)
+            #gray1 = frame_preprocessing(gray1)
+            #gray2 = frame_preprocessing(gray2)
 
             mask = np.zeros_like(gray1)
             cv2.circle(
@@ -219,6 +239,57 @@ def spin_detection(trajectory_path: os.PathLike[str],
 
             axis, theta = compute_rotation(old3d, new3d)
 
+
+            # Create a copy of the ROI so we don't draw on the original image data
+            # Create copies so we don't draw on the original data
+            vis_roi1 = roi1.copy()
+            vis_roi2 = roi2.copy()
+
+            # The centers of the ball in this specific ROI
+            cx1, cy1 = int(center_roi1[0]), int(center_roi1[1])
+            cx2, cy2 = int(center_roi2[0]), int(center_roi2[1])
+
+            # Draw the ball's bounding circles for context
+            cv2.circle(vis_roi1, (cx1, cy1), r1, (255, 255, 0), 1, lineType=cv2.LINE_AA)
+            cv2.circle(vis_roi2, (cx2, cy2), r2, (255, 255, 0), 1, lineType=cv2.LINE_AA)
+
+            # Loop through all the points that survived the 3D filter
+            for (old_pt, new_pt) in good_pts:
+                ox, oy = int(old_pt[0]), int(old_pt[1])
+                nx, ny = int(new_pt[0]), int(new_pt[1])
+
+                # Draw on ROI 1: Just the starting point
+                cv2.circle(vis_roi1, (ox, oy), 1, (0, 0, 255), -1, lineType=cv2.LINE_AA)
+
+                # Draw on ROI 2: The green flow line and the ending point
+                cv2.line(vis_roi2, (nx, ny), (ox, oy), (0, 255, 0), 1, lineType=cv2.LINE_AA)
+                cv2.circle(vis_roi2, (nx, ny), 1, (0, 0, 255), -1, lineType=cv2.LINE_AA)
+
+            # --- ENHANCEMENT: Resize for Visibility ---
+            scale_factor = 8
+            vis_roi1_large = cv2.resize(vis_roi1, (0, 0), fx=scale_factor, fy=scale_factor, interpolation=cv2.INTER_NEAREST)
+            vis_roi2_large = cv2.resize(vis_roi2, (0, 0), fx=scale_factor, fy=scale_factor, interpolation=cv2.INTER_NEAREST)
+
+            # --- ADD TEXT LABELS ---
+            # We add text AFTER scaling up so the font is high resolution and readable
+            cv2.putText(vis_roi1_large, f"Frame {i} (Start)", (10, 30), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+            cv2.putText(vis_roi2_large, f"Frame {i+1} (End)", (10, 30), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+
+            # --- STITCH THEM TOGETHER ---
+            # Stack the two images horizontally
+            combined_vis = np.hstack((vis_roi1_large, vis_roi2_large))
+
+            # Display the combined dashboard
+            cv2.imshow("Optical Flow Tracking: Before & After", combined_vis)
+
+            # Pause execution to view the frame (Press 'q' to quit, any other key to advance)
+            key = cv2.waitKey(0) & 0xFF
+            if key == ord('q'):
+                break
+
+
             spin_output[i] = {
                 "frame": i,
                 "x": x1,
@@ -240,12 +311,14 @@ if __name__ == "__main__":
 
     PROJECT_ROOT = Path().resolve()
 
-    clip = "clip_7"
-    extension = ".mov"
+    clip = "clip_1"
+    extension = ".mp4"
     video_path = f"{PROJECT_ROOT}\\data\\clips\\{clip}{extension}"
     save_path = f"{PROJECT_ROOT}\\src\\spin\\spin_output\\{clip}"
     trajectory_path = f"{PROJECT_ROOT}\\src\\ball_detection\\postprocessing_output\\postprocessed_{clip}.json"
 
     spin_detection(trajectory_path, video_path, save_path)
+
+    cv2.destroyAllWindows()
 
     print(-1)
