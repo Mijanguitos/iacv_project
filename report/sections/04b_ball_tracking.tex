@@ -6,13 +6,48 @@ The ball-tracking workflow consists of three main steps: video preprocessing, ba
 
 Firstly, each frame must be manipulated to reduce video noise so that the CHT consistently detects the ball. This process starts by masking all pixels outside the ROI using the coordinates retrieved in section \ref{sec:lane_detection}. Then, median blurring is applied to remove high-frequency noise from light reflections in the lane, followed by adaptive histogram equalization to increase contrast specifically in the region where the ball is located. This last step is particularly helpful because the ROI is expected to have a relatively consistent surface across the frames. We end up with a black-and-white clip in which the ball is clearly distinguishable from the rest of the scene, and the lane reflections are smoothed out.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=0.27\textwidth]{ball_tracking/preprocessed_frame_clip_1.png}
+    \includegraphics[height=0.27\textwidth]{ball_tracking/preprocessed_frame_clip_2.png}
+    \includegraphics[height=0.27\textwidth]{ball_tracking/preprocessed_frame_clip_13.png}
+    \caption{Preprocessed frames of different bowling releases. The ball is clearly distinguishable from the rest of the scene, and the lane imperfections are smoothed out.}
+    \label{fig:preprocessed_frame}
+\end{figure}
+
+
 Once we have the preprocessed clip, we apply OpenCV's built-in CHT algorithm. The library implements the \emph{Hough gradient method}, which first applies \emph{Canny edge detection} and then computes the local gradient for every nonzero pixel via the first-order Sobel x and y derivatives. These gradients are used to populate the two-dimensional \emph{accumulator plane} \cite{BRADSKI08}, in which potential circle centers are tracked. For every edge pixel, a line is projected along its gradient from a specified minimum to a maximum distance, incrementing the accumulator cells along the way. The local maxima in this plane are selected as candidate centers. Finally, for each center, the algorithm evaluates the distances to nearby edge pixels to determine the optimal radius, preserving the circle only if it receives sufficient support and maintains a minimum distance from previously validated centers. The result is a dataset containing every detected circle, its x- and y-center coordinates, and its radius for each frame.
 
-This algorithm efficiently detects circles across video frames; however, it may also introduce noise due to numerical instabilities \cite{BRADSKI08}, leading to false detections. The third step of the workflow focuses on filtering all circles representing the ball in each frame, resulting in a final defined trajectory. The methodology for discernment was inspired by \cite{PALLAVI08}, in which they elaborate a weighted directed graph to determine the ball’s path in a soccer broadcast. The difference in our implementation is that a bowling release is less dynamic than a soccer kick; its behavior is more predictable, and its trajectory is easier to generalize. 
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=0.2\textwidth]{ball_tracking/candidates_frame_1.png}
+    \includegraphics[height=0.2\textwidth]{ball_tracking/candidates_frame_2.png}
+    \includegraphics[height=0.2\textwidth]{ball_tracking/candidates_frame_4.png}
+    \includegraphics[height=0.2\textwidth]{ball_tracking/candidates_frame_3.png}
+    \caption{Detected circles overlayed on the preprocessed frames of the same clip. The algorithm detects multiple circles in each frame, which may include false positives due to noise.}
+    \label{fig:candidates_frame}
+\end{figure}
+
+This algorithm detects circles across video frames; however, it may also introduce noise due to numerical instabilities \cite{BRADSKI08}, leading to false detections, or even no detections over the ball, as seen in figure \ref{fig:candidates_frame}. The third step of the workflow focuses on filtering all circles representing the ball in each frame, resulting in a final defined trajectory. The methodology for discernment was inspired by \cite{PALLAVI08}, in which they elaborate a weighted directed graph to determine the ball’s path in a soccer broadcast. The difference in our implementation is that a bowling release is less dynamic than a soccer kick; its behavior is more predictable, and its trajectory is easier to generalize.
 
 The main idea is that each ball candidate in a frame is represented by a graph node, which is then directionally connected to all other candidates in the five subsequent frames. This is done because the previous step might miss the ball in consecutive frames. In the end, the longest path in the graph is retrieved, which represents the actual ball trajectory. To fill in the missing frames in the trajectory, cubic spline interpolation is applied to both the x- and y-center coordinates, followed by a light Gaussian filter ($\sigma = 5$) to eliminate noise, and a simple quadratic least squares interpolation for the radius values.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{ball_tracking/graph.png}
+    \caption{Graph representation of the ball candidates across frames. Each node represents a candidate circle, and directed edges connect candidates in consecutive frames. The longest path through the graph corresponds to the most coherent trajectory of the ball.}
+    \label{fig:graph}
+\end{figure}
+
 The entire workflow yields the final dataset, which contains the coordinates and radius of each circle from the first to the last detected frame of the clip. This data will be crucial for the following steps in spin detection and 3D reconstruction.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=0.4\textwidth]{ball_tracking/comparative_trajectory.png}
+    \caption{Left: Observed ball centers (blue) and their corresponding radii (orange) across frames. Right: Final trajectory after interpolation and smoothing, with the same color scheme.}
+    \label{fig:comparative_trajectory}
+\end{figure}
+
 
 \subsubsection{Spin detection}
 
@@ -33,7 +68,7 @@ With the initial features detected, we approach their displacement between conse
 We want to determine the velocity vectors that indicate how far the feature has moved in the $x$ and $y$ directions. The brightness constancy tells us that the pixel intensity $I(x, y, t)$ at a specific point on the bowling ball does not change as the ball moves to a new position in the next frame:
 
 \begin{equation}
-I(x, y, t) = I(x + \delta x, y + \delta y, t + 1)
+I(x, y, t) = I(x + \Delta x, y + \Delta y, t + 1)
 \end{equation}
 
 By linearizing, we obtain the \emph{standard optical flow equation}:
