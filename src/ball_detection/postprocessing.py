@@ -42,8 +42,8 @@ def create_graph(ball_candidates: dict) -> nx.DiGraph:
     # Pre-loop setup
     node_ids_by_frame = {} # Dictionary to store {frame_index: [list_of_node_ids]}
     ball_count = 0
-    window_size = 10 # How many frames back to look
-    max_distance = 70  # Maximum pixels a ball can move between frames
+    window_size = 5 # How many frames back to look
+    max_distance = 60  # Maximum pixels a ball can move between frames
 
     for frame in range(n_frames):
         if ball_candidates[str(frame)] is not None:
@@ -66,22 +66,23 @@ def create_graph(ball_candidates: dict) -> nx.DiGraph:
                     # Check if we have nodes recorded for that previous frame
                     if prev_frame in node_ids_by_frame:
                         for prev_node_id in node_ids_by_frame[prev_frame]:
-                            # Get position of the previous ball
+                        # Get position of the previous ball
                             prev_pos = DG.nodes[prev_node_id]['pos']
                             
                             # Calculate Euclidean Distance
+                            #dist = np.linalg.norm(curr_pos - prev_pos)
                             squared_diffs = (curr_pos - prev_pos) ** 2
                             sum_squared = np.sum(squared_diffs)
                             dist = np.sqrt(sum_squared)
                                                         
                             # --- DIRECTIONAL FILTER ---
-                            # In OpenCV, Y=0 is the top of the screen. 
-                            # Moving "forward" down the lane means Y must decrease.
-                            # We use +2 pixels of tolerance for bounding box jitter.
-                            is_moving_forward = curr_pos[1] <= (prev_pos[1] + 2)
+                            # In OpenCV, Y=0 is the top of the screen. Moving "upwards" means Y decreases.
+                            # We use <= with a tiny tolerance (+2 pixels) to account for slight bounding-box jitter 
+                            # where the ball might appear perfectly flat for a single frame.
+                            is_moving_upwards = curr_pos[1] <= (prev_pos[1] + 2)
                             
-                            # 3. Only connect if the movement is realistic AND moving forward
-                            if dist < max_distance and dist != 0.00 and is_moving_forward:
+                            # Only connect if the movement is realistic AND directional
+                            if dist < max_distance and dist != 0.00 and is_moving_upwards:
                                 DG.add_edge(prev_node_id, ball_count, weight=dist)
                                 #print(f"Connected: Frame {prev_frame}->{frame} (Dist: {dist:.2f})")
 
