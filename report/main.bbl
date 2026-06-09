@@ -81,6 +81,11 @@ I.T. Jolliffe.
 \newblock {\em Principal Component Analysis}.
 \newblock Springer Series in Statistics. Springer, 2002.
 
+\bibitem{KABSCH76}
+W.~Kabsch.
+\newblock A solution for the best rotation to relate two sets of vectors.
+\newblock {\em Acta Crystallographica Section A}, 32(5):922--923, 1976.
+
 \bibitem{SIFT}
 David Lowe.
 \newblock Distinctive image features from scale-invariant keypoints.
