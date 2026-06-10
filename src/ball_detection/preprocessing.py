@@ -125,7 +125,7 @@ def video_preprocessing(video_path: os.PathLike[str],
     output = cv2.VideoWriter(f"{save_path}.mp4", -1, fps, (int(width), int(height)), isColor=False)
 
     # Compute the modified polygon for masking
-    modified_polygon = compute_modified_polygon(lane_points, 15, 20)
+    modified_polygon = compute_modified_polygon(lane_points, 70, 20)
 
     # Loops to perform preprocessing
     while True:

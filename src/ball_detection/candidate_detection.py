@@ -37,10 +37,10 @@ def circle_detection(frame: cv2.typing.MatLike) -> np.ndarray:
                                method=cv2.HOUGH_GRADIENT_ALT,
                                dp=1.2,      #1.2                 # downsample size
                                minDist=50, #100          # minimum distance between detected cirlces
-                               param1=300,  #300             # upper threshold for canny edge detection
-                               param2=0.7,  #40             # cummulator (lower) threshold for canny edge detection
+                               param1=200,  #300             # upper threshold for canny edge detection
+                               param2=0.8,  #40             # cummulator (lower) threshold for canny edge detection
                                minRadius=15,
-                               maxRadius=100)
+                               maxRadius=70)
                 
     if circles is not None:
         circles = np.uint16(np.around(circles))
@@ -52,7 +52,7 @@ def circle_detection(frame: cv2.typing.MatLike) -> np.ndarray:
 def candidate_detection(video_path: os.PathLike[str],
                         save_path: os.PathLike[str]):
     """ Ball candidate detection.
-    Reads the video file from path and applies circle detection for each frame. Then generates
+    Reads the video file from path and applies circle detection for each framqe. Then generates
     a video that displays where the circles were found and a .json file containing all the
     bowling ball candidates for each frame.
 

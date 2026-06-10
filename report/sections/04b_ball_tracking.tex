@@ -104,6 +104,13 @@ The Pyramidal Lucas-Kanade implementation provided by OpenCV is mathematically r
 
 This step is particularly important because there are ever-present non-rotating reflections on the ball’s surface, which trigger multiple misses in the optical flow.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=0.4\textwidth]{ball_tracking/Optical_flow.png}
+    \caption{Subsequent frames optical flow. Left: First frame's features detected on the ball’s surface. Right: Next frame's feature tracked positions.}
+    \label{fig:optical_flow}
+\end{figure}
+
 The optical flow output yields a 2D tracked-features dataset, containing an initial point cloud $P_{2D}$ and its corresponding final point cloud $Q_{2D}$ for every pair of consecutive frames. Now we need to transform those 2D $(u, v)$ coordinates into 3D space $(X, Y, Z)$. The bounding box’s center $(C_x, C_y)$ coincides with the ball’s geometric center. We subtract it from $(u, v)$ to obtain 2D local X and Y coordinates in a ball-centric reference frame. Then, these coordinates can be projected onto the ball’s hemisphere, assuming it is a perfect sphere and that $r\approx \frac{1}{2}\verb|frame_width|$ (defined in the bounding box). By solving the sphere equation we get the missing $Z$ coordinate:
 \begin{equation}
     \begin{aligned}
@@ -140,3 +147,4 @@ Finally, the 3D unit vector $[X, Y, Z]$ defining the stable rotational core of t
     \end{bmatrix}
 \end{equation}
 
+The kinematic solver outputs a frame-by-frame estimation of the raw 3D spin axis and angular velocity. However, this raw data is inherently corrupted by high-frequency noise from the optical flow process, as the number and direction of features are not always consistent and can yield inaccurate results. The final postprocessing workflow addresses axis-sign ambiguity correction, outlier removal, interpolation, and smoothing.

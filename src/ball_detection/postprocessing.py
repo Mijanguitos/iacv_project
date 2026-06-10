@@ -43,7 +43,7 @@ def create_graph(ball_candidates: dict) -> nx.DiGraph:
     # Pre-loop setup
     node_ids_by_frame = {} # Dictionary to store {frame_index: [list_of_node_ids]}
     ball_count = 0
-    window_size = 5 # How many frames back to look
+    window_size = 15 # How many frames back to look
     max_distance = 60  # Maximum pixels a ball can move between frames
 
     for frame in range(n_frames):
@@ -185,67 +185,59 @@ def reconstruct_trayectory(candidates_graph: nx.DiGraph):
     
     return longest_path_nodes, trajectory_coords, frames, radii
 
-def interpolation(data: np.ndarray, frames: np.ndarray, degree: int) -> np.ndarray:
+def interpolation(data: np.ndarray, 
+                  frames_in: np.ndarray, 
+                  frames_out: np.ndarray, 
+                  degree: int) -> np.ndarray:
     """
     Perform Least Squares Polynomial Interpolation of the given degree.
     
     Args:
         data (np.ndarray): Array of shape (N, 2) containing [x, y] coordinates.
-        frames (np.ndarray): Array of shape (N,) containing frame indices.
+        frames_in (np.ndarray): Array of shape (N,) containing input frame indices.
+        frames_out (np.ndarray): Array of shape (M,) containing output frame indices.
         degree (int): The degree of the polynomial (e.g., 2 for quadratic, 3 for cubic).
     
     Returns:
         np.ndarray: Interpolated values over the frame's domain.
     """
-    # Design matrix
-    f_shift = frames[0]
-    f_shifted = frames - f_shift
+    # 1. Shift the timeline to prevent polynomial explosion
+    f_shift = frames_out[0]
+    
+    # 2. Fit the curve using ONLY the clean, filtered frames
+    A = np.vander(frames_in - f_shift, degree + 1)
+    params, _, _, _ = np.linalg.lstsq(A, data, rcond=None)
+    
+    # 3. Reconstruct the smooth curve over the FULL, unbroken timeline
+    A_full = np.vander(frames_out - f_shift, degree + 1)
+    est_data = A_full @ params        
 
-    #A = np.transpose(np.array([f**3, f**2, f, np.ones(len(f))]))
-    A = np.vander(f_shifted, degree + 1)
+    return est_data
 
-    params_x, _, _, _ = np.linalg.lstsq(A, data, rcond=None)
-
-    f_full = np.arange(frames[0], frames[-1])
-    f_full_shifted = f_full - f_shift
-
-    A_full = np.vander(f_full_shifted, degree + 1)
-    est_x = A_full @ params_x    
-
-    return est_x
-
-def logarithmic_interpolation(data: np.ndarray, frames: np.ndarray) -> np.ndarray:
+def logarithmic_interpolation(data: np.ndarray, 
+                              frames_in: np.ndarray, 
+                              frames_out: np.ndarray) -> np.ndarray:
     """
     Perform Logarithmic Least Squares Interpolation.
     Fits the curve r = A * ln(f_shifted) + B.
     
     Args:
         data (np.ndarray): Array containing radius values.
-        frames (np.ndarray): Array containing frame indices.
+        frames_in (np.ndarray): Array containing input frame indices.
+        frames_out (np.ndarray): Array containing output frame indices.
         
     Returns:
         np.ndarray: Logarithmically interpolated radius values.
     """
-    # 1. Shift frames to ensure strictly positive inputs for the natural log
-    # We subtract (first_frame - 1) so the timeline always starts exactly at 1.
-    f_shift = frames[0] - 1
-    x_shifted = frames - f_shift 
+    f_shift = frames_out[0] - 1
     
-    # 2. Transform the X-axis (frames) into log scale
-    ln_x = np.log(x_shifted)
-    
-    # 3. Setup the design matrix for a linear fit: [ln(x), 1]
+    # Fit using filtered frames
+    ln_x = np.log(frames_in - f_shift)
     A_matrix = np.vstack([ln_x, np.ones(len(ln_x))]).T
-    
-    # 4. Solve for the multiplier (A) and intercept (B) using Least Squares
     A, B = np.linalg.lstsq(A_matrix, data, rcond=None)[0]
     
-    # 5. Generate the target timeline and shift it identically
-    f_full = np.arange(frames[0], frames[-1])
-    f_full_shifted = f_full - f_shift
-    
-    # 6. Reconstruct the logarithmic curve over the full timeline
-    est_data = A * np.log(f_full_shifted) + B
+    # Reconstruct over full timeline
+    est_data = A * np.log(frames_out - f_shift) + B
     
     return est_data
 
@@ -340,6 +332,8 @@ def compute_trajectory(candidates_path: os.PathLike[str],
     y = trajectory_coords[:, 1]
     r = np.transpose(radii)
 
+    f_global = np.arange(frames[0], frames[-1])
+
     observations = {"x": x.tolist(),
                     "y": y.tolist(),
                     "r": r.tolist(),
@@ -349,42 +343,42 @@ def compute_trajectory(candidates_path: os.PathLike[str],
     y, frames_y = remove_outliers(y, frames)
     r, frames_r = remove_outliers(r, frames)
     
-    x_int = interpolation(x, frames, 4)
+    x_int = interpolation(x, frames_x, f_global, 4)
     #x_int = spline_interpolation(x, frames)
     #x_int = gaussian_filter(x_int, sigma=3)
     #y_int = interpolation(y, frames, 4)
     #y_int = spline_interpolation(y, frames)
-    y_int = interpolation(y, frames, 4)
+    y_int = interpolation(y, frames_y, f_global, 4)
     #y_int = gaussian_filter(y_int, sigma=3)
     
     #r_int = exponential_interpolation(r, frames)   
     #r_int = spline_interpolation(r, frames)
-    r_int = logarithmic_interpolation(r, frames)
+    r_int = logarithmic_interpolation(r, frames_r, f_global)
 
     f = np.arange(frames[0], frames[-1])
 
     plot_interpolation(
-        frames_raw=frames, 
+        frames_raw=frames_y,  # Matches the length of filtered 'y'
         data_raw=y, 
-        frames_interp=f, 
+        frames_interp=f_global, 
         data_interp=y_int, 
         title="Smoothed Y-Coordinate Trajectory", 
         ylabel="Pixel Y-Coordinate (Depth)"
     )
 
     plot_interpolation(
-        frames_raw=frames, 
+        frames_raw=frames_x,  # Matches the length of filtered 'x'
         data_raw=x, 
-        frames_interp=f, 
+        frames_interp=f_global, 
         data_interp=x_int, 
         title="Smoothed X-Coordinate Trajectory", 
         ylabel="Pixel X-Coordinate"
     )
 
     plot_interpolation(
-        frames_raw=frames, 
+        frames_raw=frames_r,  # Matches the length of filtered 'r'
         data_raw=r, 
-        frames_interp=f, 
+        frames_interp=f_global, 
         data_interp=r_int, 
         title="Smoothed Radius Trajectory", 
         ylabel="Ball Radius (Pixels)"
