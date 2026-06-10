@@ -44,7 +44,7 @@ def create_graph(ball_candidates: dict) -> nx.DiGraph:
     node_ids_by_frame = {} # Dictionary to store {frame_index: [list_of_node_ids]}
     ball_count = 0
     window_size = 15 # How many frames back to look
-    max_distance = 60  # Maximum pixels a ball can move between frames
+    max_distance = 80  # Maximum pixels a ball can move between frames
 
     for frame in range(n_frames):
         if ball_candidates[str(frame)] is not None:
@@ -354,6 +354,7 @@ def compute_trajectory(candidates_path: os.PathLike[str],
     #r_int = exponential_interpolation(r, frames)   
     #r_int = spline_interpolation(r, frames)
     r_int = logarithmic_interpolation(r, frames_r, f_global)
+    r_int = interpolation(r, frames_r, f_global, 4)
 
     f = np.arange(frames[0], frames[-1])
 

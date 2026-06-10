@@ -34,6 +34,12 @@ def roi_bounds_single(x: int, y: int, r: int, frame_shape:tuple, offset: int):
     return x_min, x_max, y_min, y_max
 
 
+def pad_roi(roi, th, tw):
+    ph = th - roi.shape[0]
+    pw = tw - roi.shape[1]
+    return cv2.copyMakeBorder(roi, 0, ph, 0, pw, cv2.BORDER_REFLECT)
+
+
 def frame_preprocessing(frame: cv2.typing.MatLike):
     # Create CLAHE object (localized histogram equalization)
     clahe = cv2.createCLAHE(clipLimit = 2.5,
@@ -83,7 +89,7 @@ def filter_3d_points(
     center_roi2,
     ball_radius,
     fb_threshold=10.0,
-    low_threshold_factor=5,
+    low_threshold_factor=2,
     is_retry=False,  # <-- Added safety flag
 ):
     movement_threshold = ball_radius
@@ -124,9 +130,14 @@ def filter_3d_points(
             center_roi1,
             center_roi2,
             ball_radius,
-            low_threshold_factor=50,
+            low_threshold_factor=10,
             is_retry=True,  # <-- Flag that we are now in the retry loop
         )
+    
+    outside = sum(1 for ox, oy, _ in old3d if ox**2 + oy**2 > ball_radius**2)
+    if outside > 0:
+        print(f"Warning: {outside}/{len(old3d)} points projected outside ball radius")
+
 
     # If we already retried (or succeeded), just return the arrays
     return old3d, new3d, good_pts
@@ -194,23 +205,26 @@ def spin_detection(trajectory_path: os.PathLike[str],
             x1, y1, r1 = xs[j], ys[j], rs[j]
             x2, y2, r2 = xs[j + 1], ys[j + 1], rs[j + 1]
 
-            # Get the ROI bounds for both frames
-            x_min, x_max, y_min, y_max = roi_bounds(x1, y1, x2, y2,
-                                                    r1, frame1.shape,
-                                                    offset=2)
-
             x_min, x_max, y_min, y_max = roi_bounds_single(x1, y1, r1, frame1.shape, offset=2)                                                        
             roi1 = frame1[y_min:y_max, x_min:x_max]
 
             # Shift the second ROI to be centered on the second ball position
             # the rois need to be the same shape
             x_min2, x_max2, y_min2, y_max2 = roi_bounds_single(x2, y2, r1, frame2.shape, offset=2)
-
             roi2 = frame2[y_min2:y_max2, x_min2:x_max2]
+
+            # Pad both ROIs to the same target size in case edge-clipping
+            # caused one to be smaller than the other (fixes LK pyramid size error)
+            target_h = max(roi1.shape[0], roi2.shape[0])
+            target_w = max(roi1.shape[1], roi2.shape[1])
+
+
+            roi1 = pad_roi(roi1, target_h, target_w)
+            roi2 = pad_roi(roi2, target_h, target_w)
 
             print(roi1.shape, roi2.shape)
 
-            # Compute center in ROI coordinates
+            # Compute center in ROI coordinatesq
             center_roi1 = np.array([x1 - x_min, y1 - y_min])
             center_roi2 = np.array([x2 - x_min2, y2 - y_min2])
 
@@ -238,7 +252,6 @@ def spin_detection(trajectory_path: os.PathLike[str],
                 continue # Abort the rest of the loop and move to the next frame
 
             axis, theta = compute_rotation(old3d, new3d)
-
 
             # Create a copy of the ROI so we don't draw on the original image data
             # Create copies so we don't draw on the original data
