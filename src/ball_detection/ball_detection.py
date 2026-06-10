@@ -50,11 +50,12 @@ if __name__ == "__main__":
     #lane_points = np.array([[608, 983], [1186, 1016], [1259, 350], [1131, 344]]) # For clip 7
     #lane_points = np.array([[608, 983], [1185, 1016], [1258, 354], [1129, 347]]) # For clip 5
 
-    #lane_points = np.array([[390, 861], [1085, 878], [1148, 222],  [979, 221]]) # For clip 13
+    #lane_points = np.array([[390, 861], [1085, 878], [1148, 222],  [979, 221]]) # For clip 11
+    #lane_points = np.array([[611, 992], [788, 996], [740, 1594], [1, 1584]]) # For clip 12
 
-    lane_points = np.array([[266, 1048], [1043, 1048], [1103, 169], [912, 171]]) # For clip 11
+    lane_points = np.array([[266, 1048], [1043, 1048], [1103, 169], [912, 171]]) # For clip 13
     
-    clip = "clip_11"
+    clip = "clip_13"
     
     PROJECT_ROOT = Path().resolve()
     print(f"Project Root: {PROJECT_ROOT}")

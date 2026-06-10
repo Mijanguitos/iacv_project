@@ -217,10 +217,6 @@ def spin_detection(trajectory_path: os.PathLike[str],
             gray1 = cv2.cvtColor(roi1, cv2.COLOR_BGR2GRAY)
             gray2 = cv2.cvtColor(roi2, cv2.COLOR_BGR2GRAY)
 
-            # Gray frame preprocessing
-            #gray1 = frame_preprocessing(gray1)
-            #gray2 = frame_preprocessing(gray2)
-
             mask = np.zeros_like(gray1)
             cv2.circle(
                 mask, tuple(center_roi1.astype(int)), int(r1 * 0.8), 255, -1
@@ -263,11 +259,13 @@ def spin_detection(trajectory_path: os.PathLike[str],
                 nx, ny = int(new_pt[0]), int(new_pt[1])
 
                 # Draw on ROI 1: Just the starting point
-                cv2.circle(vis_roi1, (ox, oy), 1, (0, 0, 255), -1, lineType=cv2.LINE_AA)
+                cv2.circle(vis_roi1, (ox, oy), 1, (0, 0, 255), 1, lineType=cv2.LINE_AA)
 
                 # Draw on ROI 2: The green flow line and the ending point
+
                 cv2.line(vis_roi2, (nx, ny), (ox, oy), (0, 255, 0), 1, lineType=cv2.LINE_AA)
-                cv2.circle(vis_roi2, (nx, ny), 1, (0, 0, 255), -1, lineType=cv2.LINE_AA)
+                cv2.circle(vis_roi2, (ox, oy), 1, (255, 0, 0), 1, lineType=cv2.LINE_AA)
+                cv2.circle(vis_roi2, (nx, ny), 1, (0, 0, 255), 1, lineType=cv2.LINE_AA)
 
             # --- ENHANCEMENT: Resize for Visibility ---
             scale_factor = 8
@@ -276,10 +274,10 @@ def spin_detection(trajectory_path: os.PathLike[str],
 
             # --- ADD TEXT LABELS ---
             # We add text AFTER scaling up so the font is high resolution and readable
-            cv2.putText(vis_roi1_large, f"Frame {i} (Start)", (10, 30), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
-            cv2.putText(vis_roi2_large, f"Frame {i+1} (End)", (10, 30), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+            cv2.putText(vis_roi1_large, f"Frame {i}", (10, 30), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
+            cv2.putText(vis_roi2_large, f"Frame {i+1}", (10, 30), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
 
             # --- STITCH THEM TOGETHER ---
             # Stack the two images horizontally

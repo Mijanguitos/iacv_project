@@ -220,9 +220,7 @@ def compute_z_axis(x_axes, y_axes, z_axis_avg):
 
 def spin_post_processing(json_path: os.PathLike[str],
                          save_path: os.PathLike[str],
-                         video_path: os.PathLike[str],
-                         original_video_path: os.PathLike[str],
-                         trajectory_path: os.PathLike[str]):
+                         video_path: os.PathLike[str]):
     
     # Load .json data
     with open(f"{json_path}.json", "r") as f:
@@ -239,7 +237,7 @@ def spin_post_processing(json_path: os.PathLike[str],
 
 
     # Get the original's video frame count and rate for interpolation reference
-    CAP = cv2.VideoCapture(original_video_path)
+    CAP = cv2.VideoCapture(video_path)
     n_frames = int(CAP.get(cv2.CAP_PROP_FRAME_COUNT))
     fps = CAP.get(cv2.CAP_PROP_FPS)
     print(f"Original video has {n_frames} frames at {fps} FPS.")

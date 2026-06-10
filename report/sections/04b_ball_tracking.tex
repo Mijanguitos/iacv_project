@@ -6,10 +6,145 @@ The ball-tracking workflow consists of three main steps: video preprocessing, ba
 
 Firstly, each frame must be manipulated to reduce video noise so that the CHT consistently detects the ball. This process starts by masking all pixels outside the ROI using the coordinates retrieved in section \ref{sec:lane_detection}. Then, median blurring is applied to remove high-frequency noise from light reflections in the lane, followed by adaptive histogram equalization to increase contrast specifically in the region where the ball is located. This last step is particularly helpful because the ROI is expected to have a relatively consistent surface across the frames. We end up with a black-and-white clip in which the ball is clearly distinguishable from the rest of the scene, and the lane reflections are smoothed out.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=0.27\textwidth]{ball_tracking/preprocessed_frame_clip_1.png}
+    \includegraphics[height=0.27\textwidth]{ball_tracking/preprocessed_frame_clip_2.png}
+    \includegraphics[height=0.27\textwidth]{ball_tracking/preprocessed_frame_clip_13.png}
+    \caption{Preprocessed frames of different bowling releases. The ball is clearly distinguishable from the rest of the scene, and the lane imperfections are smoothed out.}
+    \label{fig:preprocessed_frame}
+\end{figure}
+
+
 Once we have the preprocessed clip, we apply OpenCV's built-in CHT algorithm. The library implements the \emph{Hough gradient method}, which first applies \emph{Canny edge detection} and then computes the local gradient for every nonzero pixel via the first-order Sobel x and y derivatives. These gradients are used to populate the two-dimensional \emph{accumulator plane} \cite{BRADSKI08}, in which potential circle centers are tracked. For every edge pixel, a line is projected along its gradient from a specified minimum to a maximum distance, incrementing the accumulator cells along the way. The local maxima in this plane are selected as candidate centers. Finally, for each center, the algorithm evaluates the distances to nearby edge pixels to determine the optimal radius, preserving the circle only if it receives sufficient support and maintains a minimum distance from previously validated centers. The result is a dataset containing every detected circle, its x- and y-center coordinates, and its radius for each frame.
 
-This algorithm efficiently detects circles across video frames; however, it may also introduce noise due to numerical instabilities \cite{BRADSKI08}, leading to false detections. The third step of the workflow focuses on filtering all circles representing the ball in each frame, resulting in a final defined trajectory. The methodology for discernment was inspired by \cite{PALLAVI08}, in which they elaborate a weighted directed graph to determine the ball’s path in a soccer broadcast. The difference in our implementation is that a bowling release is less dynamic than a soccer kick; its behavior is more predictable, and its trajectory is easier to generalize. 
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=0.2\textwidth]{ball_tracking/candidates_frame_1.png}
+    \includegraphics[height=0.2\textwidth]{ball_tracking/candidates_frame_2.png}
+    \includegraphics[height=0.2\textwidth]{ball_tracking/candidates_frame_4.png}
+    \includegraphics[height=0.2\textwidth]{ball_tracking/candidates_frame_3.png}
+    \caption{Detected circles overlayed on the preprocessed frames of the same clip. The algorithm detects multiple circles in each frame, which may include false positives due to noise.}
+    \label{fig:candidates_frame}
+\end{figure}
+
+This algorithm detects circles across video frames; however, it may also introduce noise due to numerical instabilities \cite{BRADSKI08}, leading to false detections, or even no detections over the ball, as seen in figure \ref{fig:candidates_frame}. The third step of the workflow focuses on filtering all circles representing the ball in each frame, resulting in a final defined trajectory. The methodology for discernment was inspired by \cite{PALLAVI08}, in which they elaborate a weighted directed graph to determine the ball’s path in a soccer broadcast. The difference in our implementation is that a bowling release is less dynamic than a soccer kick; its behavior is more predictable, and its trajectory is easier to generalize.
 
 The main idea is that each ball candidate in a frame is represented by a graph node, which is then directionally connected to all other candidates in the five subsequent frames. This is done because the previous step might miss the ball in consecutive frames. In the end, the longest path in the graph is retrieved, which represents the actual ball trajectory. To fill in the missing frames in the trajectory, cubic spline interpolation is applied to both the x- and y-center coordinates, followed by a light Gaussian filter ($\sigma = 5$) to eliminate noise, and a simple quadratic least squares interpolation for the radius values.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{ball_tracking/graph.png}
+    \caption{Graph representation of the ball candidates across frames. Each node represents a candidate circle, and directed edges connect candidates in consecutive frames. The longest path through the graph corresponds to the most coherent trajectory of the ball.}
+    \label{fig:graph}
+\end{figure}
+
 The entire workflow yields the final dataset, which contains the coordinates and radius of each circle from the first to the last detected frame of the clip. This data will be crucial for the following steps in spin detection and 3D reconstruction.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=0.4\textwidth]{ball_tracking/comparative_trajectory.png}
+    \caption{Left: Observed ball centers (blue) and their corresponding radii (orange) across frames. Right: Final trajectory after interpolation and smoothing, with the same color scheme.}
+    \label{fig:comparative_trajectory}
+\end{figure}
+
+
+\subsubsection{Spin detection}
+
+Once we have defined the bounding box, we select the trackable features on the ball’s surface. To compute optical flow, we identify points in the first image that are sufficiently distinct so they can be located again in the next image. OpenCV provides a pipeline based on the Shi-Tomasi corner detection algorithm \cite{SHI94}. Instead of relying solely on edge information, which captures gradient changes in a single direction, the algorithm seeks regions with significant intensity variation in two orthogonal directions. It computes the first-order image gradients, $I_x$ and $I_y$, using a 3x3 Sobel kernel, which represent the rate of change of brightness in the horizontal and vertical directions. These gradients are then used to compute the \emph{structure tensor} (or second-moment matrix) $M$ over a window function $w$ that captures the spatial context around a pixel:
+
+\begin{equation}
+	M = \sum_{x,y}w(x, y) 
+\begin{bmatrix} 
+	I^2_x & I_x I_y \\
+	I_x I_y & I^2_y
+\end{bmatrix}
+\end{equation}
+
+The structure tensor is a covariance matrix of the image gradients. Its eigenvalues $\lambda_1$ and $\lambda_2$ are the intensity change in each direction. If both are small, the region is flat; if one is larger than the other, it represents an edge; and if both are large, we have found the so-called corner, where there is a strong intensity change in both orthogonal directions. Corners typically represent the best trackable features for the optical flow. In this context, the intensity changes must be detected solely on the ball’s surface. Hence, the importance of the ball not having a homogeneous texture. We finally end up with an array of pixel locations that hopefully will be found in the next frame.
+
+With the initial features detected, we approach their displacement between consecutive frames using the \emph{Pyramidal Lucas-Kanade} (PyLK) optical flow algorithm \cite{BOUGUET00}. The standard Lucas-Kanade algorithm rests on three core assumptions about the scene: brightness constancy, spatial coherence, and temporal persistence. The first implies that the brightness of tracked pixels does not change between frames. Spatial coherence means that neighboring points in a scene belong to the same surface and have similar motion. The last assumption is that features move relatively small distances between consecutive frames, as it relies only on a local window of information \cite{BRADSKI08}. The latter, however, conflicts with the behavior of the spinning ball: the ball’s rotational speed causes features to move noticeably between frames.
+
+We want to determine the velocity vectors that indicate how far the feature has moved in the $x$ and $y$ directions. The brightness constancy tells us that the pixel intensity $I(x, y, t)$ at a specific point on the bowling ball does not change as the ball moves to a new position in the next frame:
+
+\begin{equation}
+I(x, y, t) = I(x + \Delta x, y + \Delta y, t + 1)
+\end{equation}
+
+By linearizing, we obtain the \emph{standard optical flow equation}:
+
+\begin{equation}
+I_xu + I_yv = -I_t
+\end{equation}
+
+, where $I_t$ is the difference in pixel intensity between frames, $I_x$ and $I_y$ are the spatial image gradients (computed in the feature detection), and $u$ and $v$ are the unknown velocity vectors. However, as we have a single equation for two unknowns, it cannot be solved with a single pixel. The solution takes advantage of the spatial coherence assumption: the optical flow is calculated for all the pixels around the feature for which we can build a system solvable by least-squares minimization:
+
+\begin{equation}
+\begin{bmatrix}
+I_x(p_1) & I_y(p_1) \\
+I_x(p_2) & I_y(p_2) \\
+\vdots & \vdots \\
+I_x(p_n) & I_y(p_n)
+\end{bmatrix}
+\begin{bmatrix}u \\ v\end{bmatrix} =
+\begin{bmatrix}I_t(p_1) \\ I_t(p_2) \\ \vdots \\ I_t(p_n)\end{bmatrix}
+\end{equation}
+
+\begin{equation}
+\begin{bmatrix}u \\ v\end{bmatrix} = (A^T A)^{-1} A^T b
+\end{equation}
+
+The standard Lucas-Kanade algorithm is effective for small displacements but struggles with larger movements, as in our spinning ball. The local window in which the algorithm operates may not contain the corresponding feature in the next frame, causing it to be missed. Making the window larger, however, conflicts with the spatial coherence assumption, as the pixels might belong to different objects and move in multiple directions. The pyramidal implementation of the algorithm allows the handling of larger displacements by creating a multi-scale representation of the image. First, optical flow is computed at a lower resolution, and then the motion estimates are iteratively used to make the next guess at a higher resolution until the original scale is reached \cite{BOUGUET00}.
+
+The Pyramidal Lucas-Kanade implementation provided by OpenCV is mathematically robust for optical flow estimation. However, the output may include false positives, as it always returns a destination coordinate for a feature, even if the feature becomes occluded, leaves the frame, or is distorted by motion blur. To filter out these falsely tracked features, we implement \emph{forward-backward validation} \cite{SHI94}. We calculate the forward optical flow by projecting the corners from the first frame $p_0$ onto their estimated positions in the subsequent one $p_1$. For the backward optical flow, the new estimated positions are projected to new initial positions in the initial frame $p_0\prime$, which should match the original corners. We calculate the error between $p_0$ and $p_0\prime$, which should not exceed a predefined threshold to keep the tracked feature.
+
+\begin{equation}
+    E_{FB} = \lvert p_0 - p_0' \rvert
+\end{equation}
+
+This step is particularly important because there are ever-present non-rotating reflections on the ball’s surface, which trigger multiple misses in the optical flow.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=0.4\textwidth]{ball_tracking/Optical_flow.png}
+    \caption{Subsequent frames optical flow. Left: First frame's features detected on the ball’s surface. Right: Next frame's feature tracked positions.}
+    \label{fig:optical_flow}
+\end{figure}
+
+The optical flow output yields a 2D tracked-features dataset, containing an initial point cloud $P_{2D}$ and its corresponding final point cloud $Q_{2D}$ for every pair of consecutive frames. Now we need to transform those 2D $(u, v)$ coordinates into 3D space $(X, Y, Z)$. The bounding box’s center $(C_x, C_y)$ coincides with the ball’s geometric center. We subtract it from $(u, v)$ to obtain 2D local X and Y coordinates in a ball-centric reference frame. Then, these coordinates can be projected onto the ball’s hemisphere, assuming it is a perfect sphere and that $r\approx \frac{1}{2}\verb|frame_width|$ (defined in the bounding box). By solving the sphere equation we get the missing $Z$ coordinate:
+\begin{equation}
+    \begin{aligned}
+    r^2 &= X^2 + Y^2 + Z^2  \\
+    Z &= \sqrt{r^2-X^2-Y^2}
+    \end{aligned}
+\end{equation}
+
+With the 3D point cloud $P_{3D}$ and its corresponding displacement $Q_{3D}$, the next step is to compute the rotation that aligns $P$ into $Q$. This is known as the \emph{orthogonal Procrustes} problem, which we resolve by implementing the \emph{Kabsch algorithm} \cite{KABSCH76}. First we compute the cross-covariance matrix $H$, which encapsulates the correlation between point clouds, and factor it using \emph{singlular value decomposition} to get the orthogonal matrices $U$ and $V^T$, that represent the rotations, and the diagonal matrix of singular values $\Sigma$:
+\begin{equation}
+\begin{aligned}
+H &= P^T Q \\
+\mathrm{SVD}(H) &= U \Sigma V^T
+\end{aligned}
+\end{equation}
+
+Having extracted the orthogonal components, the optimal rotation matrix $R$ is computed as $ V U^T$. However, because SVD is a purely mathematical factorization, it may yield a matrix that implies a coordinate inversion across the plane rather than physical rotation. This is identified by a negative determinant of $R$, so we invert the sign of the third column of $V$ and recompute $R$ whenever $\det(R) = -1$:
+\begin{equation}
+R = V U^T
+\end{equation}
+
+While the matrix $R$ fully describes the orientation change, it is not directly interpretable in terms of physical kinematics. Therefore, we convert $R$ into an axis-angle representation. The angular velocity (the magnitude of rotation per frame), $\theta$, is derived from the trace of the rotation matrix:
+\begin{equation}
+\theta = \arccos\left(\frac{\operatorname{tr}(R) - 1}{2}\right)
+\end{equation}
+
+Finally, the 3D unit vector $[X, Y, Z]$ defining the stable rotational core of the ball (the spin axis) is extracted from the off-diagonal elements of $R$:
+\begin{equation}
+    \text{Axis} = \frac{1}{2 \sin(\theta)}
+    \begin{bmatrix}
+        R_{32} - R_{23} \\
+        R_{13} - R_{31} \\
+        R_{21} - R_{12}
+    \end{bmatrix}
+\end{equation}
+
+The kinematic solver outputs a frame-by-frame estimation of the raw 3D spin axis and angular velocity. However, this raw data is inherently corrupted by high-frequency noise from the optical flow process, as the number and direction of features are not always consistent and can yield inaccurate results. The final postprocessing workflow addresses axis-sign ambiguity correction, outlier removal, interpolation, and smoothing.
