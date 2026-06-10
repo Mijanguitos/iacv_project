@@ -1,6 +1,6 @@
 \begin{thebibliography}{10}
 
-\bibitem{DBLP:journals/corr/Aly14}
+\bibitem{aly2014lanedetection}
 Mohamed Aly.
 \newblock Real time detection of lane markers in urban streets.
 \newblock {\em CoRR}, abs/1411.7113, 2014.
@@ -23,14 +23,14 @@ John Canny.
 \newblock {\em Pattern Analysis and Machine Intelligence, IEEE Transactions
   on}, PAMI-8:679 -- 698, 12 1986.
 
-\bibitem{6115930}
+\bibitem{chen2011trajectory}
 Hua-Tsung Chen, Chien-Li Chou, Wen-Jiin Tsai, and Suh-Yin Lee.
 \newblock 3d ball trajectory reconstruction from single-camera sports video for
   free viewpoint virtual replay.
 \newblock In {\em 2011 Visual Communications and Image Processing (VCIP)},
   pages 1--4, 2011.
 
-\bibitem{ball_dimensions}
+\bibitem{dimensionscom2024balldimensions}
 {Dimensions.com}.
 \newblock Bowling ball (ten-pin), 2024.
 
@@ -40,13 +40,13 @@ Richard~O. Duda and Peter~E. Hart.
   pictures.
 \newblock {\em Communications of the ACM}, 15:11 -- 15, 1972.
 
-\bibitem{10.1145/358669.358692}
+\bibitem{fischler1981ransac}
 Martin~A. Fischler and Robert~C. Bolles.
 \newblock Random sample consensus: a paradigm for model fitting with
   applications to image analysis and automated cartography.
 \newblock {\em Commun. ACM}, 24(6):381–395, June 1981.
 
-\bibitem{2004AmJPh..72.1170F}
+\bibitem{frohlich2004what}
 Cliff {Frohlich}.
 \newblock {What makes bowling balls hook?}
 \newblock {\em American Journal of Physics}, 72(9):1170--1177, September 2004.
@@ -60,13 +60,13 @@ Rafael~C. Gonzalez and Richard~E. Woods.
 Thomas Gossard, Julian Krismer, Andreas Ziegler, Jonas Tebbe, and Andreas Zell.
 \newblock Table tennis ball spin estimation with an event camera, 2024.
 
-\bibitem{iot_sports_analytics}
+\bibitem{gowda2017bringing}
 Mahanth Gowda, Ashutosh Dhekne, Sheng Shen, Romit Choudhury, Xue Yang, Lei
   Yang, Suresh Golwalkar, and Alexander Essanian.
 \newblock Bringing iot to sports analytics.
 \newblock 03 2017.
 
-\bibitem{Hartley_Zisserman_2004}
+\bibitem{hartley2004multipleview}
 Richard Hartley and Andrew Zisserman.
 \newblock {\em Multiple View Geometry in Computer Vision}.
 \newblock Cambridge University Press, 2 edition, 2004.
@@ -86,12 +86,12 @@ W.~Kabsch.
 \newblock A solution for the best rotation to relate two sets of vectors.
 \newblock {\em Acta Crystallographica Section A}, 32(5):922--923, 1976.
 
-\bibitem{SIFT}
+\bibitem{lowe2004sift}
 David Lowe.
 \newblock Distinctive image features from scale-invariant keypoints.
 \newblock {\em International Journal of Computer Vision}, 60:91--, 11 2004.
 
-\bibitem{10.5555/1623264.1623280}
+\bibitem{lucas1981iterative}
 Bruce~D. Lucas and Takeo Kanade.
 \newblock An iterative image registration technique with an application to
   stereo vision.
@@ -99,33 +99,29 @@ Bruce~D. Lucas and Takeo Kanade.
   Artificial Intelligence - Volume 2}, IJCAI'81, page 674–679, San Francisco,
   CA, USA, 1981. Morgan Kaufmann Publishers Inc.
 
-\bibitem{laplacian}
+\bibitem{marr1980edgedetection}
 D.~Marr and Ellen Hildreth.
 \newblock Theory of edge detection.
 \newblock {\em Proceedings of the Royal Society of London. Series B, Containing
   papers of a Biological character. Royal Society (Great Britain)},
   207:187--217, 02 1980.
 
-\bibitem{probabilistic_hough}
+\bibitem{matas2000probabilistic}
 Jiri Matas, C.~Galambos, and J.~Kittler.
 \newblock Robust detection of lines using the progressive probabilistic hough
   transform.
 \newblock {\em Computer Vision and Image Understanding}, 78:119--137, 04 2000.
 
-\bibitem{10678117}
+\bibitem{nakabayashi2024eventbased}
 Takuya Nakabayashi, Kyota Higa, Masahiro Yamaguchi, Ryo Fujiwara, and Hideo
   Saito.
 \newblock Event-based ball spin estimation in sports.
 \newblock In {\em 2024 IEEE/CVF Conference on Computer Vision and Pattern
   Recognition Workshops (CVPRW)}, pages 3367--3375, 2024.
 
-\bibitem{opencv_color_conversion}
+\bibitem{opencv2018colorconversions}
 {OpenCV}.
 \newblock Color space conversions, 2018.
-
-\bibitem{opencv_color_conversions}
-{OpenCV Team}.
-\newblock Color conversions - opencv documentation, 2026.
 
 \bibitem{PALLAVI08}
 V.~Pallavi, J.~Mukherjee, A.~K. Majumdar, and S.~Sural.
@@ -134,40 +130,45 @@ V.~Pallavi, J.~Mukherjee, A.~K. Majumdar, and S.~Sural.
 \newblock {\em Journal of Visual Communication and Image Representation},
   19(7):426--436, 2008.
 
+\bibitem{richards2012remote}
+J.A. Richards.
+\newblock {\em Remote Sensing Digital Image Analysis: An Introduction}.
+\newblock Engineering. Springer Berlin Heidelberg, 2012.
+
 \bibitem{SHI94}
 J.~Shi and C.~Tomasi.
 \newblock Good features to track.
 \newblock In {\em 1994 Proceedings of IEEE Conference on Computer Vision and
   Pattern Recognition}, pages 593--600, June 1994.
 
-\bibitem{sobel}
+\bibitem{sobel1973isotropic}
 Irwin Sobel and Gary Feldman.
 \newblock A 3×3 isotropic gradient operator for image processing.
 \newblock {\em Pattern Classification and Scene Analysis}, pages 271--272, 01
   1973.
 
-\bibitem{lane_dimensions}
+\bibitem{starsandstrikes2024lanedimensions}
 {Stars and Strikes}.
 \newblock How long is a bowling lane and other bowling stats?, 2024.
 
-\bibitem{current_applications_sports_analytics}
+\bibitem{thomas2017computer}
 Graham Thomas, Rikke Gade, Thomas Moeslund, Peter Carr, and Adrian Hilton.
 \newblock Computer vision for sports: Current applications and research topics.
 \newblock {\em Computer Vision and Image Understanding}, 159, 04 2017.
 
-\bibitem{WU20142756}
+\bibitem{wu2014lanemark}
 Pei-Chen Wu, Chin-Yu Chang, and Chang~Hong Lin.
 \newblock Lane-mark extraction for automobiles under complex conditions.
 \newblock {\em Pattern Recognition}, 47(8):2756--2767, 2014.
 
-\bibitem{YU2009643}
+\bibitem{yu2009cameracalibration}
 Xinguo Yu, Nianjuan Jiang, Loong-Fah Cheong, Hon~Wai Leong, and Xin Yan.
 \newblock Automatic camera calibration of broadcast tennis video with
   applications to 3d virtual content insertion and ball detection and tracking.
 \newblock {\em Computer Vision and Image Understanding}, 113(5):643--652, 2009.
 \newblock Computer Vision Based Analysis in Sport Environments.
 
-\bibitem{888718}
+\bibitem{zhang2000cameracalibration}
 Z.~Zhang.
 \newblock A flexible new technique for camera calibration.
 \newblock {\em IEEE Transactions on Pattern Analysis and Machine Intelligence},
