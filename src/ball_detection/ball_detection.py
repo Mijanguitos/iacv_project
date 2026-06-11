@@ -45,22 +45,24 @@ def ball_detection(lane_points: np.ndarray,
 
 if __name__ == "__main__":
 
-    #lane_points = np.array([[872, 684], [1228, 696], [1241, 277], [1146, 273]]) # For clip 1
-    #lane_points = [[819, 813], [1308, 819] , [1442, 175], [1254, 175]] # For clip 2
-    #lane_points = np.array([[608, 983], [1186, 1016], [1259, 350], [1131, 344]]) # For clip 7
-    #lane_points = np.array([[608, 983], [1185, 1016], [1258, 354], [1129, 347]]) # For clip 5
-
-    #lane_points = np.array([[390, 861], [1085, 878], [1148, 222],  [979, 221]]) # For clip 11
-    #lane_points = np.array([[611, 992], [788, 996], [740, 1594], [1, 1584]]) # For clip 12
-
-    lane_points = np.array([[266, 1048], [1043, 1048], [1103, 169], [912, 171]]) # For clip 13
+    #lane_points = np.array([[872, 684], [1228, 696], [1241, 277], [1146, 273]])    # For clip 1
+    #lane_points = np.array([[819, 813], [1308, 819] , [1442, 175], [1254, 175]])   # For clip 2
+    #lane_points = np.array([[590, 847], [1061, 855], [1204, 190], (1038, 188)])    # For clip 3
+    #lane_points = np.array([[608, 983], [1185, 1016], [1258, 354], [1129, 347]])   # For clip 5
     
-    clip = "clip_13"
-    
+    #lane_points = np.array([[607, 985], [1192, 1018], [1258, 349], [1131, 346]])    # For clip 6
+    #lane_points = np.array([[608, 983], [1186, 1016], [1259, 350], [1131, 344]])   # For clip 7
+    #lane_points = np.array([[325, 1074], [1683, 1071], [1573, 385], (1259, 394)])   # For clip 8
+
+    #lane_points = np.array([[390, 861], [1085, 878], [1148, 222],  [979, 221]]) # For clip 9, 10, 11 and 12
+    lane_points = np.array([[266, 1048], [1043, 1048], [1103, 169], [912, 171]]) # For clip 13, 14, 15 and 16
+
+    clip = "clip_16"   # Change this variable to select the clip to be processed
+    extension = ".mp4"
+
     PROJECT_ROOT = Path().resolve()
     print(f"Project Root: {PROJECT_ROOT}")
 
-    extension = ".mp4"
     video_path = f"data\\clips\\{clip}{extension}"
     ball_path = f"{PROJECT_ROOT}\\src\\ball_detection\\"
     preprocessing_path = f"{ball_path}preprocessing_output\\preprocessed_{clip}"

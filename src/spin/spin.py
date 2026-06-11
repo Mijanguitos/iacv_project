@@ -56,7 +56,7 @@ def ball_spin(trajectory_path: os.PathLike[str],
 if __name__ == "__main__":
     
     # Define the clip you want to process
-    clip = "clip_11"
+    clip = "clip_16"
     extension = ".mp4"
     
     PROJECT_ROOT = Path().resolve()

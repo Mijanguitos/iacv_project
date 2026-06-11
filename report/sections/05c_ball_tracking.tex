@@ -1,0 +1,44 @@
+\subsubsection{Spin and trajectory detection results}
+
+The ball detection pipeline was applied to eight clips across two release sessions. The releases of clips 9-12 and 13-16 were done consecutively with a non-homogeneous ball. For each clip, the lane polygon was reused for each session, across all clips within it. The \emph{Circle Hough Transform} consistently detected the ball across all frames after preprocessing, with the weighted directed graph resolving ambiguous candidates into a coherent single trajectory. Cubic spline interpolation and Gaussian smoothing ($\sigma = 5$) filled the sparse detection gaps (as seen in Figure \ref {fig:final_tracking}), and the final radius estimates followed the expected monotonic decrease as the ball travels away from the camera.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=0.25\textwidth]{ball_tracking/final_tracking_1.png}
+    \includegraphics[height=0.25\textwidth]{ball_tracking/final_tracking_2.png}
+    \includegraphics[height=0.25\textwidth]{ball_tracking/final_tracking_3.png}
+    \includegraphics[height=0.25\textwidth]{ball_tracking/final_tracking_4.png}
+    \caption{Final ball tracking visualization with and witouth occluded ball}
+    \label{fig:final_tracking}
+\end{figure}
+
+The spin detection workflow was executed on all eight clips, yielding per-frame estimates of the rotation axis and angular velocity as shown in Table \ref{tab:spin_results}. The angular velocity $\theta$ is computed per consecutive frame pair via the Kabsch algorithm and averaged across the clip. The rev rate is derived as:
+\begin{equation}
+	RPM = \dfrac{\theta \cdot fps }{2\pi}\cdot 60
+\end{equation}
+
+
+\begin{table}[htbp]
+\centering
+    \caption{Spin detection results across two recording sessions.}
+    \label{tab:spin_results}
+    \begin{tabular}{ccccccc}
+    \toprule
+    \textbf{Session} & \textbf{Clip} & \textbf{Frames} & \textbf{FPS} & \textbf{Avg. $\theta$ (rad/frame)} & \textbf{Rev Rate (RPM)} \\
+    \midrule
+    \multirow{4}{*}{A} & clip\_9  & 98  & 30 & 0.4420 & 128.1 \\
+                    & clip\_10 & 125 & 30 & 0.4530 & 129.8 \\
+                    & clip\_11 & 207 & 30 & 0.5075 & 145.4 \\
+                    & clip\_12 & 109 & 30 & 0.4831 & 138.4 \\
+    \midrule
+    \multirow{4}{*}{B} & clip\_13 & 196 & 30 & 0.3678 & 105.4 \\
+                    & clip\_14 & 118 & 30 & 0.3637 & 104.2 \\
+                    & clip\_15 & 104 & 30 & 0.3737 & 107.1 \\
+                    & clip\_16 & 138 & 30 & 0.4063 & 116.4 \\
+    \bottomrule
+    \end{tabular}%
+\end{table}
+
+The two sessions exhibit clearly distinct rev rate profiles. Session A yields a mean of \emph{135.4 RPM} with a standard deviation of \emph{7.8 RPM}, while Session B yields a mean of \emph{108.3 RPM} with a standard deviation of \emph{5.5 RPM}. The standard deviations are of 7.8 RPM and 5.5 RPM, 5.8\% and 5.1\%, respectively, indicating strong in-session consistency across clips of varying length. This repeatability suggests the pipeline is responding to a stable physical characteristic of each release rather than to measurement noise.
+The separation between sessions is consistent across all clips with no overlap: the lowest estimate in Session A (128.1 RPM, Clip 9) exceeds the highest estimate in Session B (116.4 RPM, Clip 16) by 11.7 RPM. This clean separation further supports the interpretation that the two sessions correspond to physically distinct release styles or bowlers, with Session A exhibiting a meaningfully higher rev rate.
+

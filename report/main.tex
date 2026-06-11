@@ -80,6 +80,8 @@
 %	ADD YOUR PACKAGES (be careful of package interaction)
 %----------------------------------------------------------------------------
 
+\usepackage{multirow}
+
 %----------------------------------------------------------------------------
 %	ADD YOUR DEFINITIONS AND COMMANDS (be careful of existing commands)
 %----------------------------------------------------------------------------
@@ -91,25 +93,23 @@
 
 % Insert here the info that will be displayed into your Title page 
 % -> title of your work
-\renewcommand{\title}{Title}
+\renewcommand{\title}{Bowling Release Visual Analysis: Tracking and Reconstruction}
 % -> author name and surname
 \renewcommand{\author}{} % insert your name and surname
 
 \newcommand{\authorB}{Luis Alfonso Pérez Mijangos}
-\newcommand{\authorA}{Jose Luis Vilaseca Gallego}
+\newcommand{\authorA}{Jose Luis Vilaseca}
 
 % -> MSc course
-\newcommand{\course}{Xxxxxxxxxxxx Engineering - Ingegneria Xxxxxxxxxxxx}
+\newcommand{\course}{099993 - Image Analysis and Computer Vision}
 % -> advisor name and surname
-\newcommand{\advisor}{Prof. Name Surname}
+\newcommand{\advisor}{Prof. Vincenzo Calglioti}
 % IF AND ONLY IF you need to modify the co-supervisors you also have to modify the file Configuration_files/title_page.tex (ONLY where it is marked)
-\newcommand{\firstcoadvisor}{Name Surname} % insert if any otherwise comment
-\newcommand{\secondcoadvisor}{Name Surname} % insert if any otherwise comment
 % -> author ID
 \newcommand{\IDA}{11140177}
 \newcommand{\IDB}{11133173}
 % -> academic year
-\newcommand{\YEAR}{20XX-20XX}
+\newcommand{\YEAR}{2025-2026}
 % -> abstract (only in English)
 \renewcommand{\abstract}{
     \input{sections/01_abstract}
@@ -158,7 +158,7 @@
 %-----------------------------------------------------------------------------
 % RESULTS
 %-----------------------------------------------------------------------------
-\section{Results}
+\section{Experimental Activity and Analysis of Experimental Results}
 \label{sec:results}
 \input{sections/05_results}
 
@@ -169,32 +169,6 @@
 \label{sec:conclusions}
 \input{sections/06_conclusion}
 
-\section{Use of copyrighted material}
-
-Each student is responsible for obtaining copyright permissions, if necessary, to include published material in the thesis.
-This applies typically to third-party material published by someone else.
-
-\section{Plagiarism}
-
-You have to be sure to respect the rules on Copyright and avoid an involuntary plagiarism.
-It is allowed to take other persons' ideas only if the author and his original work are clearly mentioned.
-As stated in the Code of Ethics and Conduct, Politecnico di Milano \textit{promotes the integrity of research,
-condemns manipulation and the infringement of intellectual property}, and gives opportunity to all those
-who carry out research activities to have an adequate training on ethical conduct and integrity while doing research.
-To be sure to respect the copyright rules, read the guides on Copyright legislation and citation styles available
-at:
-\begin{verbatim}
-https://www.biblio.polimi.it/en/tools/courses-and-tutorials
-\end{verbatim}
-You can also attend the courses which are periodically organized on "Bibliographic citations and bibliography management".
-
-%-----------------------------------------------------------------------------
-% CONCLUSION
-%-----------------------------------------------------------------------------
-\section{Conclusion}
-\color{black}
-A final section containing the main conclusions of your research/study
-and possible future developments of your work have to be inserted in the section ``Conclusions''.
 
 \section{Bibliography and citations}
 
@@ -204,35 +178,7 @@ and possible future developments of your work have to be inserted in the section
 %-----------------------------------------------------------------------------
 \bibliography{bibliography/references,bibliography/ball_tracking/ball_tracking_references}
 
-\appendix
-\section{Appendix A}
-If you need to include an appendix to support the research in your thesis, you can place it at the end of the manuscript.
-An appendix contains supplementary material (figures, tables, data, codes, mathematical proofs, surveys, \dots)
-which supplement the main results contained in the previous sections.
 
-\section{Appendix B}
-It may be necessary to include another appendix to better organize the presentation of supplementary material.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%     ABSTRACT IN ITALIAN LANGUAGE AND ACKNOWLEDGMENTS     %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\cleardoublepage
-
-%-----------------------------------------------------------------------------
-% SOMMARIO
-%-----------------------------------------------------------------------------
-\section*{Abstract in lingua italiana}
-Qui va l'Abstract in lingua italiana della tesi seguito dalla lista di parole chiave.
-\vspace{15pt}
-\begin{tcolorbox}[arc=0pt, boxrule=0pt, colback=bluePoli!60, width=\textwidth, colupper=white]
-    \textbf{Parole chiave:} qui, le parole chiave, della tesi, in italiano 
-\end{tcolorbox}
-
-%-----------------------------------------------------------------------------
-% ACKNOWLEDGEMENTS
-%-----------------------------------------------------------------------------
-\section*{Acknowledgements}
-Here you might want to acknowledge someone.
 
 %-------------------------------------------------------------------------
 %	END OF YOUR DOCUMENT
