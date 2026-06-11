@@ -7,13 +7,14 @@ To achieve a robust and accurate estimation, the problem is formulated as a stru
 \begin{enumerate}
     \item \textbf{Lane Detection:} Identifying the physical boundaries of the playing surface within the image plane, despite perspective distortion and object occlusion.
     
-    \item \textbf{Planar Metric Rectification:} Utilizing the detected lane boundaries to compute a planar homography matrix, mapping the perspective-distorted image space to a metric, 2D bird's-eye view.
+    \item \textbf{Ball Trajectory Tracking:} Isolating the bowling ball across consecutive frames and applying temporal interpolation to generate a continuous, robust 2D trajectory from discrete, raw center coordinates.
+
+    \item \textbf{Ball Spin Estimation:} Analyzing the rotational displacement of surface features on the ball to estimate its spin rate, a critical parameter in bowling performance.
     
-    \item \textbf{Ball Detection and Tracking:} Isolating the bowling ball across consecutive frames and applying temporal interpolation to generate a continuous, robust 2D trajectory from discrete, raw center coordinates.
+    \item \textbf{Planar Metric Rectification:} Utilizing the detected lane boundaries to compute a planar homography matrix, mapping the perspective-distorted image space to a metric, 2D bird's-eye view.    
+        
+    \item \textbf{3D Trajectory Reconstruction:} Lifting the 2D tracking data into 3D spatial coordinates by enforcing two geometric constraints: the ball maintains constant contact with the rectified lane plane, and it possesses a known, fixed physical radius.
     
-    \item \textbf{3D Trajectory Estimation:} Lifting the 2D tracking data into 3D spatial coordinates by enforcing two geometric constraints: the ball maintains constant contact with the rectified lane plane, and it possesses a known, fixed physical radius.
-    
-    \item \textbf{Spin Calculation:} Analyzing the rotational displacement of surface features on the ball to estimate its spin rate, a critical parameter in bowling performance.
 \end{enumerate}
 
 \subsection{Motivation and Relevance}
