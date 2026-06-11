@@ -54,6 +54,7 @@ The Sobel operator computes first-order image gradients and is used to approxima
 The Canny detector follows a multi-stage process involving gradient computation, non-maximum suppression, and hysteresis thresholding. This approach typically produces thinner and more connected edges, but its performance is sensitive to threshold selection and illumination variability.
 
 The Laplacian operator is a second-order derivative method that detects regions of rapid intensity change regardless of direction. While it can highlight fine structures, it is also more sensitive to noise and may produce fragmented edge maps in low-contrast regions.
+
 All three methods were implemented and evaluated across multiple bowling videos. Based on qualitative performance and stability of the resulting edge maps, the Sobel operator was selected as the primary edge detector for the proposed pipeline. Depending on the boundary being estimated, the gradient direction is adapted to emphasize either horizontal or vertical structures, improving the extraction of relevant lane edges prior to line fitting.
 
 \subsubsection{Line extraction using the Hough transform}
