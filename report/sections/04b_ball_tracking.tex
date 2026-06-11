@@ -1,6 +1,6 @@
 The products derived from the bowling release are the ball’s 2D trajectory along the lane and its spin. The trajectory is defined by localizing the geometric center of the ball through the clip’s frames, whereas the parameters of spin are axis orientation and angular velocity. The previously obtained data is used to define the region of interest in which we’ll find the ball’s projection as a circle in every frame. Once the trajectory data is available, the ball’s locations across consecutive frames are used to determine the positional change of its features and to derive its spin parameters. With both products in hand, we can then generate a visualization that consistently follows the ball’s motion and proceed with the 3D reconstruction of the scene.
 
-\subsubsection{Trajectory detection}
+\subsubsection{Trajectory Tracking}
 
 The ball-tracking workflow consists of three main steps: video preprocessing, ball-candidate detection, and trajectory computation. We begin by isolating the scene’s region of interest and applying noise-reduction and contrast-enhancement filters to each frame. Then, the \emph{Circle Hough Transform} (CHT) algorithm is applied to generate a dataset of all geometries that could represent the ball’s position in each frame. Finally, we select the geometries that best form a coherent trajectory from the candidates, interpolate any missing values in the set, and smooth the final trajectory. In the end, we obtain a ball-center dataset with the image geometric coordinates and their corresponding radii.
 
@@ -49,7 +49,7 @@ The entire workflow yields the final dataset, which contains the coordinates and
 \end{figure}
 
 
-\subsubsection{Spin detection}
+\subsubsection{Spin Estimation}
 
 The motion describing the spin of the bowling ball is a rigid body rotation with respect to a reference frame fixed to its geometric center, fully characterized by a rotation axis and an angular velocity around it. The spin detection workflow consists of four main steps: bounding box definition, feature detection, optical flow estimation, and kinematic solving. First, the trajectory data obtained in the previous section is used to define a dynamic bounding box around the ball in each frame, which constrains the region of interest for the subsequent analysis. Then, trackable features are identified on the ball's surface using the Shi-Tomasi corner detection algorithm. Their displacement between consecutive frames is then estimated via the Pyramidal Lucas-Kanade optical flow algorithm, yielding a 2D tracked-features dataset. Finally, the 2D correspondences are projected onto the ball's hemisphere and fed into the Kabsch algorithm to recover the 3D rotation matrix, from which the spin axis and angular velocity are extracted. It is important to note that the spin detection workflow relies on detected features on the ball's surface, which are expected to be non-homogeneous. Therefore, the system is designed to work with a textured ball, as a homogeneous surface would not provide sufficient features for tracking.
 

@@ -1,6 +1,6 @@
 
 Once both lane geometry and ball trajectory have been estimated in the image plane, the next step consists of transforming the scene into a physically meaningful coordinate system aligned with the real-world dimensions of the bowling lane. Due to perspective distortion, measurements in the image space are not directly interpretable in metric terms. For this reason, a perspective rectification is performed using a homography grounded in the known geometry of the lane.
-\subsubsection{Homography-based lane rectification}
+\subsubsection{Planar Metric Rectification}
 Given the four lane corner points obtained from the intersection of the estimated boundaries, a planar homography is computed to map points from the image plane to a top-down representation of the bowling lane. Unlike a generic projective transformation, this mapping is constrained by the known physical dimensions of a standard bowling lane, namely a width of 1.066~m and a length of 18.29~m \cite{starsandstrikes2024lanedimensions}.
 The destination coordinate system is defined directly in metric units, such that the rectified plane corresponds to a physically scaled representation of the lane surface. This establishes a direct correspondence between image coordinates and real-world measurements.
 The homography H is estimated such that:
@@ -9,7 +9,7 @@ where $\mathbf{x}_{\mathrm{metric}}$ lies in a metric coordinate system expresse
 As a result, the rectified output represents the lane in a perspective-corrected and metrically scaled coordinate system.
 
 
-\subsubsection{Ball trajectory transformation and 3D reconstruction}
+\subsubsection{3D Trajectory Reconstruction}
 The reconstructed trajectory is obtained through a sequence of geometric transformations that map image-space detections into a 3D representation expressed in the coordinate system of the bowling lane.
 
 First, the ball center is detected in the image plane as a sequence of positions over time, together with the corresponding estimated radii. The ball-lane contact point is then computed under the assumption that the ball remains in continuous contact with the lane surface, by correcting the detected center using the estimated radius along the vertical image axis.
