@@ -13,6 +13,7 @@ The ball detection pipeline was applied to eight clips across two release sessio
 \end{figure}
 
 The spin detection workflow was executed on all eight clips, yielding per-frame estimates of the rotation axis and angular velocity as shown in Table \ref{ tab:spin_results}. The angular velocity $\theta$ is computed per consecutive frame pair via the Kabsch algorithm and averaged across the clip. The rev rate is derived as:
+The spin detection workflow was executed on all eight clips, yielding per-frame estimates of the rotation axis and angular velocity as shown in Table \ref{tab:spin_results}. The angular velocity $\theta$ is computed per consecutive frame pair via the Kabsch algorithm and averaged across the clip. The rev rate is derived as:
 \begin{equation}
 	RPM = \dfrac{\theta \cdot fps }{2\pi}\cdot 60
 \end{equation}
