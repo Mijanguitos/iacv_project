@@ -173,7 +173,7 @@ def main():
         trajectory_3d.append((frame_id, X, Y, Z))
 
     
-    create_3d_bowling_visualization(trajectory_3d, lane_width=1.066, lane_length=18.29)
+    create_3d_bowling_visualization(trajectory_3d, lane_width=1.066, lane_length=19.16)
 
 
 if __name__ == "__main__":
