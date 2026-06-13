@@ -24,9 +24,9 @@ ball_detection_paths:
 
 spin_estimation_paths:
   outputs:
-    opticalflow_path: "src/spin/optical_flow_output"
-    postprocessing_path: "src/spin/postprocessing_output"
-    visualization_path: "src/spin/spin_output"
+    opticalflow_path: "src/spin/optical_flow_output/optical_flow_"
+    postprocessing_path: "src/spin/postprocessing_output/postprocessed_"
+    visualization_path: "src/spin/spin_output/rendered_"
 
 paths:
   input_clip_path: "data/clips/clip_11.mp4"
