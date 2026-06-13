@@ -313,7 +313,7 @@ def plot_interpolation(frames_raw: np.ndarray, data_raw: np.ndarray,
     
     # Tighten up the layout
     ax.margins(0.05)
-    plt.tight_layout()
+    #plt.tight_layout()
     #plt.show()
 
 def compute_trajectory(candidates_path: os.PathLike[str],

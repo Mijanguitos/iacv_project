@@ -335,7 +335,7 @@ def spin_post_processing(json_path: os.PathLike[str],
         frame_data["z_axis"] = z_axes_final[i]
         frame_data["angle"] = angles_filled[i]
 
-    with open(f"{save_path}_postprocessing.json", 'w') as f:
+    with open(f"{save_path}.json", 'w') as f:
         json.dump(data, f, indent=4)
 
 

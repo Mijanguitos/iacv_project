@@ -22,7 +22,7 @@ import spin.spin as spin
 config = load_config("src/config.yaml")
 
 # SELECTION OF THE CLIP TO PROCESS
-CLIP = "clip_1"
+CLIP = "clip_2"
 
 def main():
     vid = cv2.VideoCapture(config.paths.input_clip_path)
@@ -39,7 +39,7 @@ def main():
         return
 
     ## Visualization of different methods for lane boundary detection
-    run_all_videos()
+    # run_all_videos()
     
     ## 1. Lane Detection
     # 1.1 Detect bottom boundary
@@ -100,8 +100,8 @@ def main():
         trajectory_path = f"{config.ball_detection_paths.outputs.postprocessing}{CLIP}"
         trajectory_visualization_path = f"{config.ball_detection_paths.outputs.visualization}{CLIP}"
 
-        optical_flow_path = f"{config.spin_estimation_paths.outputs.optical_flow_output.opticalflow_path}{CLIP}"
-        spin_postprocessing_path = f"{config.spin_estimation_paths.outputs.postprocessing_output.postprocessing_path}{CLIP}"
+        optical_flow_path = f"{config.spin_estimation_paths.outputs.opticalflow_path}{CLIP}"
+        spin_postprocessing_path = f"{config.spin_estimation_paths.outputs.postprocessing_path}{CLIP}"
         spin_visualization_path = f"{config.spin_estimation_paths.outputs.visualization_path}{CLIP}"
 
         ball_detection.ball_detection(lane_points=lane_points, 
@@ -116,9 +116,7 @@ def main():
                        postprocessing_out_path=spin_postprocessing_path, 
                        visualization_out_path=spin_visualization_path)
 
-        raise NotImplementedError(
-            "Ball trajectory calculation not implemented in this script. Please run the ball detection module first to generate the trajectory data."
-        )
+        
 
     trajectory_data = load_json(config.paths.ball_trajectory_data_path)
 
@@ -167,7 +165,7 @@ def main():
     )
 
     ## 5. Generate video overlaying ball trajectory on original video and rectified lane
-    # TODO: Add spin to video
+    
 
     generate_trajectory_video_with_board(
         input_video_path=config.paths.input_clip_path,

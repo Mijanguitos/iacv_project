@@ -176,7 +176,7 @@ def spin_detection(trajectory_path: os.PathLike[str],
     height = CAP.get(cv2.CAP_PROP_FRAME_HEIGHT)   # float `height`
 
     # Extract the trajectory data from the JSON file
-    with open(trajectory_path, "r") as f:
+    with open(f"{trajectory_path}.json", "r") as f:
         data = json.load(f)
 
     trajectory = data["estimations"]
