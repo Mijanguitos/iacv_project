@@ -20,6 +20,9 @@ The motion estimation and post-processing steps are grounded in rigorous kinemat
 
 | Directory | Description |
 | :--- | :--- |
+| `data/clips/` | Stores raw input video clips to be analysed. |
+| `data/templates/` | Reference image templates (e.g., pins, board tracking) used across the pipeline. |
+| `report/` | Contains the LaTeX source code, figures, bibliography, and compiled PDF for the project's technical documentation and final report. |
 | `src/ball_detection/` | Video preprocessing, candidate isolation, and trajectory post-processing. |
 | `src/lane_detection/` | Boundary detection using templates and gradient thresholding. |
 | `src/rectification/` | Homography transformations to map image coordinates to lane geometry. |
@@ -28,10 +31,17 @@ The motion estimation and post-processing steps are grounded in rigorous kinemat
 
 ## Installation
 
-Ensure you have Python 3.8+ installed. Install the required dependencies:
-
 ```bash
 pip install -r requirements.txt
 ```
 Core dependencies include opencv-python, numpy, scikit-learn, and pyyaml.
 
+## Usage
+
+The pipeline is driven by a central configuration file. Ensure `src/config.yaml` is updated with your specific video paths and threshold requirements before executing the main script.
+
+To orchestrate the full pipeline—which includes lane detection, perspective rectification, ball tracking, spin estimation, and 3D overlay rendering—run the following command from the project root:
+
+```bash
+python main.py
+```
