@@ -39,7 +39,8 @@ def main():
         return
 
     ## Visualization of different methods for lane boundary detection
-    # run_all_videos()
+    if config.experiments.run_all_videos:
+        run_all_videos()
     
     ## 1. Lane Detection
     # 1.1 Detect bottom boundary
@@ -48,6 +49,10 @@ def main():
         edge_threshold=config.lane_detection.bottom.edge_threshold,
         edge_method=config.lane_detection.bottom.edge_method,
         conv_method=config.lane_detection.bottom.conv_method,
+        edges_dir=config.debug.edges_dir,
+        lines_dir=config.debug.lines_dir,
+        best_dir=config.debug.best_dir,
+        debug= config.debug.debug
     )
 
     # 1.2 Detect lateral boundaries
@@ -67,11 +72,17 @@ def main():
         conv_method=config.lane_detection.lateral.conv_method,
         direction=config.lane_detection.lateral.direction,
         lane_center=lane_center,
+        edges_dir=config.debug.edges_dir,
+        lines_dir=config.debug.lines_dir,
+        best_dir=config.debug.best_dir,
+        debug=config.debug.debug
     )
 
     # 1.3 Detect top boundary
     top_line = get_top_lane_boundary(
-        frame, template_pin, mode=config.lane_detection.top.mode
+        frame, template_pin, mode=config.lane_detection.top.mode, debug=config.debug.debug,
+        lines_dir=config.debug.lines_dir,
+        best_dir=config.debug.best_dir,
     )
 
     # 1.4 Post-process boundaries to get final lane corners
@@ -200,7 +211,7 @@ def main():
         trajectory_3d.append((frame_id, X, Y, Z))
 
     
-    create_3d_bowling_visualization(trajectory_3d, lane_width=1.066, lane_length=18.29)
+    create_3d_bowling_visualization(trajectory_3d, lane_width=1.066, lane_length=19.16)
 
 
 if __name__ == "__main__":

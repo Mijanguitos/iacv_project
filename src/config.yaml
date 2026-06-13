@@ -62,4 +62,14 @@ plotting:
   board_margin: 20
 
 misc:
-  calculate_ball_trajectory: true
+  calculate_ball_trajectory: false
+
+debug:
+  debug: false
+  best_dir: "debug/best_line"
+  lines_dir: "debug/lines"
+  edges_dir: "debug/edges"
+
+
+experiments:
+  run_all_videos: false

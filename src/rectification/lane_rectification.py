@@ -10,7 +10,7 @@ def rectify_bowling_lane(
     image,
     src_points,
     lane_width_m=1.066,     # 42 inches
-    lane_length_m=18.29,    # 60 feet
+    lane_length_m=19.16,    # 60 feet + pins
     pixels_per_meter=100,
     output_path="rectified_lane.png"
 ):

@@ -347,6 +347,19 @@ def run_all_videos(
             *clips_dir.glob("*.mov"),
         ]
     )
+    # Keep only selected clips by stem name
+    _allowed_clips = {
+        "clip_1",
+        "clip_2",
+        "clip_3",
+        "clip_5",
+        "clip_6",
+        "clip_7",
+        "clip_8",
+        "clip_11",
+        "clip_13",
+    }
+    video_paths = [p for p in video_paths if p.stem in _allowed_clips]
     if not video_paths:
         raise IOError(f"No video files found in {clips_dir}")
 
