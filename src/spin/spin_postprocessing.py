@@ -227,8 +227,7 @@ def spin_post_processing(json_path: os.PathLike[str],
     frames = [frame["frame"] for frame in data.values()]
     angles = [frame["angle"] for frame in data.values()]
     
-    plotting(frames, x_axes, y_axes, z_axes, angles,
-             "Imported data")
+    #plotting(frames, x_axes, y_axes, z_axes, angles, "Imported data")
 
 
     # Get the original's video frame count and rate for interpolation reference

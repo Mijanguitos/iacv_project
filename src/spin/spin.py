@@ -34,7 +34,7 @@ def ball_spin(trajectory_path: os.PathLike[str],
 
     # Note: spin_detection appends '_spin' to the detection_out_path
     spin_postprocessing.spin_post_processing(
-        json_path=optical_flow_path, 
+        json_path=optical_flow_path,
         save_path=postprocessing_out_path, 
         video_path=video_path,
     )

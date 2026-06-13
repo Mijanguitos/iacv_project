@@ -165,7 +165,7 @@ def create_graph(ball_candidates: dict) -> nx.DiGraph:
     ax.grid(True, linestyle='--', alpha=0.4)
 
     plt.tight_layout()
-    plt.show()
+    #plt.show()
 
     return DG
 
@@ -264,15 +264,15 @@ def remove_outliers(data: np.ndarray, frames: np.ndarray, threshold: float = 3.0
     Returns:
         tuple: Filtered data array and filtered frames array.
     """
-    # 1. Calculate frame-to-frame velocity (change in position / change in time)
+    # Calculate frame-to-frame velocity (change in position / change in time)
     dt = np.diff(frames)
     dy = np.diff(data)
     velocity = dy / dt
     
-    # 2. Duplicate the first velocity to maintain the same array length
+    # Duplicate the first velocity to maintain the same array length
     velocity = np.insert(velocity, 0, velocity[0])
     
-    # 3. Calculate mean and standard deviation of the velocities
+    # Calculate mean and standard deviation of the velocities
     mean_v = np.mean(velocity)
     std_v = np.std(velocity)
     
@@ -280,10 +280,10 @@ def remove_outliers(data: np.ndarray, frames: np.ndarray, threshold: float = 3.0
     if std_v == 0:
         return data, frames
         
-    # 4. Compute Z-scores
+    # Compute Z-scores
     z_scores = np.abs((velocity - mean_v) / std_v)
     
-    # 5. Keep only the points where the velocity jump is within the normal distribution
+    # Keep only the points where the velocity jump is within the normal distribution
     mask = z_scores < threshold
     
     return data[mask], frames[mask]
@@ -314,7 +314,7 @@ def plot_interpolation(frames_raw: np.ndarray, data_raw: np.ndarray,
     # Tighten up the layout
     ax.margins(0.05)
     plt.tight_layout()
-    plt.show()
+    #plt.show()
 
 def compute_trajectory(candidates_path: os.PathLike[str],
                        save_path: os.PathLike[str]) -> dict:
@@ -358,6 +358,7 @@ def compute_trajectory(candidates_path: os.PathLike[str],
 
     f = np.arange(frames[0], frames[-1])
 
+    """
     plot_interpolation(
         frames_raw=frames_y,  # Matches the length of filtered 'y'
         data_raw=y, 
@@ -384,7 +385,7 @@ def compute_trajectory(candidates_path: os.PathLike[str],
         title="Smoothed Radius Trajectory", 
         ylabel="Ball Radius (Pixels)"
     )
-
+    """
 
     estimations = {"x": x_int.tolist(), 
                    "y": y_int.tolist(),
