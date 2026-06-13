@@ -33,7 +33,7 @@ def render_spin_overlay(json_path: os.PathLike[str],
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     
     # 3. Setup OpenCV Video Writer (MP4 format)
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    fourcc = cv2.VideoWriter_fourcc(*'mp4')
     out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
     
     # 4. Initialize 3D Geometry
