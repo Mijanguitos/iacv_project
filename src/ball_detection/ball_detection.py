@@ -4,11 +4,35 @@ import numpy as np
 import os
 
 # Custom modules
-import preprocessing
-import candidate_detection
-import postprocessing
-import visualization
+import ball_detection.preprocessing as preprocessing
+import ball_detection.candidate_detection as candidate_detection
+import ball_detection.postprocessing as postprocessing
+import ball_detection.visualization as visualization
 
+def order_lane_points(points):
+    """
+    Arranges 4 points in a consistent order: 
+    Top-Left, Top-Right, Bottom-Right, Bottom-Left.
+    """
+    # Convert to a numpy array just in case tuples or lists were passed
+    # (Notice some of your clips use () instead of [] at the end!)
+    pts = np.array(points)
+    
+    # Sort the points by their y-coordinate (ascending)
+    # The first two have the smallest y (top), the last two have largest y (bottom)
+    sorted_by_y = pts[np.argsort(pts[:, 1])]
+    
+    top_points = sorted_by_y[:2]
+    bottom_points = sorted_by_y[2:]
+    
+    # Sort the top points by their x-coordinate to separate left and right
+    top_left, top_right = top_points[np.argsort(top_points[:, 0])]
+    
+    # Sort the bottom points by their x-coordinate to separate left and right
+    bottom_left, bottom_right = bottom_points[np.argsort(bottom_points[:, 0])]
+    
+    # Return in standard order
+    return np.array([top_left, top_right, bottom_right, bottom_left], dtype="float32")
 
 def ball_detection(lane_points: np.ndarray,
                    video_path: os.PathLike[str],
@@ -28,6 +52,9 @@ def ball_detection(lane_points: np.ndarray,
         postprocessing_path (os.PathLike[str]): Path where the postprocessing output will be saved
         visualization_path (os.PathLike[str]): Path where the visualization output will be saved
     """
+
+    # Order the lane points so they are always in the specific order
+    lane_points = order_lane_points(lane_points)
 
     # Call preprocessing module to prepara the clip for ball detection    
     preprocessing.video_preprocessing(video_path, preprocessing_path, lane_points)

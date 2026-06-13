@@ -176,7 +176,7 @@ def spin_detection(trajectory_path: os.PathLike[str],
     height = CAP.get(cv2.CAP_PROP_FRAME_HEIGHT)   # float `height`
 
     # Extract the trajectory data from the JSON file
-    with open(trajectory_path, "r") as f:
+    with open(f"{trajectory_path}.json", "r") as f:
         data = json.load(f)
 
     trajectory = data["estimations"]
@@ -292,10 +292,10 @@ def spin_detection(trajectory_path: os.PathLike[str],
             cv2.putText(vis_roi2_large, f"Frame {i+1}", (10, 30), 
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
 
-            # --- STITCH THEM TOGETHER ---
             # Stack the two images horizontally
             combined_vis = np.hstack((vis_roi1_large, vis_roi2_large))
-
+            
+            """
             # Display the combined dashboard
             cv2.imshow("Optical Flow Tracking: Before & After", combined_vis)
 
@@ -303,7 +303,7 @@ def spin_detection(trajectory_path: os.PathLike[str],
             key = cv2.waitKey(0) & 0xFF
             if key == ord('q'):
                 break
-
+            """
 
             spin_output[i] = {
                 "frame": i,
@@ -317,8 +317,7 @@ def spin_detection(trajectory_path: os.PathLike[str],
             }
 
     
-
-    with open(f"{save_path}_spin.json", 'w') as f:
+    with open(f"{save_path}.json", 'w') as f:
         json.dump(spin_output, f, indent=4)
 
 

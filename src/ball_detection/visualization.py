@@ -58,7 +58,7 @@ def trajectory_plotting(concept: str,
     # Optional: Save the plot automatically using the provided save_path
     plt.savefig(f"{save_path}_{concept}_trajectory.png", bbox_inches='tight', dpi=300)
     
-    plt.show()
+    #plt.show()
 
 def comparative_trajectory_plot(trajectory: dict, save_path: os.PathLike[str]):
     """
@@ -144,7 +144,7 @@ def comparative_trajectory_plot(trajectory: dict, save_path: os.PathLike[str]):
     plt.subplots_adjust(wspace=0.05)
 
     plt.savefig(f"{save_path}_comparative_trajectory.png", bbox_inches='tight', dpi=300)
-    plt.show()
+    #plt.show()
     
 
 def frame_detection(concept: str, 

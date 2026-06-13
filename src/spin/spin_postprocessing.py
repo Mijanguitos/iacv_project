@@ -7,10 +7,6 @@ import json
 import math
 import os
 
-# Functions to implement:
-#   - Outlier removal
-#   - 
-
 # Helper plotting function
 def plotting(frames, x_axes, y_axes, z_axes, angles, stage_name = "Default"):
     # Create a 2-row subplot sharing the X-axis (Frames)
@@ -131,7 +127,7 @@ def gaussian_smoothing(series, sigma=10.0):
     if len(series) < 2:
         return series
 
-    # 1. Generate the Gaussian kernel
+    # Generate the Gaussian kernel
     # A radius of 4*sigma captures 99.99% of the bell curve's weight
     radius = int(4 * sigma)
     x = np.arange(-radius, radius + 1)
@@ -139,14 +135,13 @@ def gaussian_smoothing(series, sigma=10.0):
     kernel = np.exp(-0.5 * (x / sigma) ** 2)
     kernel = kernel / np.sum(kernel)  # Normalize so the weights equal exactly 1.0
 
-    # 2. Pad the series to prevent edge drop-off (mode='nearest')
+    # Pad the series to prevent edge drop-off (mode='nearest')
     pad_size = len(kernel) // 2
     padded_series = np.pad(series, pad_size, mode='edge')
 
-    # 3. Apply the convolution
+    # Apply the convolution
     smoothed_series = np.convolve(padded_series, kernel, mode='valid')
 
-    # Return native Python list
     return smoothed_series.tolist()
 
 # PHYSICAL CONSTRAINTS
@@ -232,8 +227,7 @@ def spin_post_processing(json_path: os.PathLike[str],
     frames = [frame["frame"] for frame in data.values()]
     angles = [frame["angle"] for frame in data.values()]
     
-    plotting(frames, x_axes, y_axes, z_axes, angles,
-             "Imported data")
+    #plotting(frames, x_axes, y_axes, z_axes, angles, "Imported data")
 
 
     # Get the original's video frame count and rate for interpolation reference
@@ -271,37 +265,31 @@ def spin_post_processing(json_path: os.PathLike[str],
 
     x_axes_clean, y_axes_clean = remove_axes_outliers(x_axes, y_axes, frames)
     angles_clean = remove_angle_outliers(angles, threshold=0.5)
-    plotting(frames, x_axes_clean, y_axes_clean, z_axes, angles_clean,
-             "Outlier removal")
+    #plotting(frames, x_axes_clean, y_axes_clean, z_axes, angles_clean, "Outlier removal")
 
     # Interpolation process
-    x_axes_filled = fill_gaps(x_axes)
-    y_axes_filled = fill_gaps(y_axes)
+    x_axes_filled = fill_gaps(x_axes_clean)
+    y_axes_filled = fill_gaps(y_axes_clean)
     angles_filled = fill_gaps(angles)
-    plotting(frames, x_axes_filled, y_axes_filled, z_axes, angles_filled,
-             "Linear interpolation")
+    #plotting(frames, x_axes_filled, y_axes_filled, z_axes, angles_filled, "Linear interpolation")
 
     x_axes_smoothed = gaussian_smoothing(x_axes_filled, sigma=10.0)
     y_axes_smoothed = gaussian_smoothing(y_axes_filled, sigma=10.0)
-    plotting(frames, x_axes_smoothed, y_axes_smoothed, z_axes, angles_filled,
-             "Gaussian smoothing")
+    #plotting(frames, x_axes_smoothed, y_axes_smoothed, z_axes, angles_filled, "Gaussian smoothing")
 
     # Monotonic x-axis rotation
     x_axes_monotonic = enforce_non_decreasing_x(x_axes_smoothed)
-    plotting(frames, x_axes_monotonic, y_axes_smoothed, z_axes, angles_filled,
-             "Monotonic x-axis rotation")
+    #plotting(frames, x_axes_monotonic, y_axes_smoothed, z_axes, angles_filled, "Monotonic x-axis rotation")
 
     # Scale the axes
     x_axes_scaled = scale_x_axis(x_axes_monotonic)
     y_axes_scaled = scale_y_axis(y_axes_smoothed)
-    plotting(frames, x_axes_scaled, y_axes_scaled, z_axes, angles_filled,
-             "X and Y axis scaling")
+    #plotting(frames, x_axes_scaled, y_axes_scaled, z_axes, angles_filled, "X and Y axis scaling")
 
     # Recalculate the Z-Axis so X^2 + Y^2 + Z^2 = 1
     z_axis_avg = statistics.mean(z_axes) if z_axes else 1.0
     z_axes_final = compute_z_axis(x_axes_scaled, y_axes_scaled, z_axis_avg)
-    plotting(frames, x_axes_scaled, y_axes_scaled, z_axes_final, angles_filled,
-             "Final z-axis calculation")
+    #plotting(frames, x_axes_scaled, y_axes_scaled, z_axes_final, angles_filled, "Final z-axis calculation")
 
 
     final_angles = [frame["angle"] for frame in data.values() if frame["angle"] is not None]
@@ -347,7 +335,7 @@ def spin_post_processing(json_path: os.PathLike[str],
         frame_data["z_axis"] = z_axes_final[i]
         frame_data["angle"] = angles_filled[i]
 
-    with open(f"{save_path}_postprocessing.json", 'w') as f:
+    with open(f"{save_path}.json", 'w') as f:
         json.dump(data, f, indent=4)
 
 
