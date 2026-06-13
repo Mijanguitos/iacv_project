@@ -22,17 +22,20 @@ import spin.spin as spin
 config = load_config("src/config.yaml")
 
 # SELECTION OF THE CLIP TO PROCESS
-CLIP = "clip_2"
+CLIP = "clip_3"
 
 def main():
-    vid = cv2.VideoCapture(config.paths.input_clip_path)
+    input_clip_path = getattr(config.clip_paths, CLIP)
+    output_rectified_lane_path = f"{config.paths.outputs.rectified_lane_prefix}{CLIP}.png"
+    output_rectified_lane_with_trajectory_path = f"{config.paths.outputs.rectified_lane_with_trajectory_prefix}{CLIP}.png"
+    output_combined_trajectory_video_path = f"{config.paths.outputs.combined_trajectory_video_prefix}{CLIP}.mp4"
+    ball_trajectory_data_path = f"{config.ball_detection_paths.outputs.postprocessing}{CLIP}.json"
+    
+    vid = cv2.VideoCapture(input_clip_path)
     ret, frame = vid.read()
     vid.release()
 
     template_pin = cv2.imread(config.paths.template_pin_path)
-    # # target_height = 40  # approximate pin height
-    # target_height = 75  # approximate pin height second vid
-    # # Vid 3 75 px approx
 
     if not ret or frame is None:
         print("Failed to read the first frame from the video")
@@ -58,7 +61,7 @@ def main():
     # 1.2 Detect lateral boundaries
     # Determine lane center for this video. Prefer per-clip override in config,
     # falling back to the global `lane_center_point`.
-    video_stem = Path(config.paths.input_clip_path).stem
+    video_stem = CLIP  
     lane_center = None
     if hasattr(config.points, "lane_center_points"):
         lane_center = getattr(config.points.lane_center_points, video_stem, None)
@@ -95,7 +98,7 @@ def main():
         image=frame,
         src_points=lane_borders,
         pixels_per_meter=100,
-        output_path=config.paths.output_rectified_lane_path,
+        output_path=output_rectified_lane_path,
     )
 
     ## 3. Obtain image plane ball trajectory
@@ -104,7 +107,7 @@ def main():
     if config.misc.calculate_ball_trajectory:
 
         lane_points = np.array(lane_borders)
-        video_path = getattr(config.clip_paths, CLIP)
+        video_path = input_clip_path
 
         trajectory_preprocessing_path = f"{config.ball_detection_paths.outputs.preprocessing}{CLIP}"
         candidate_detection_path = f"{config.ball_detection_paths.outputs.detection}{CLIP}"
@@ -127,9 +130,7 @@ def main():
                        postprocessing_out_path=spin_postprocessing_path, 
                        visualization_out_path=spin_visualization_path)
 
-        
-
-    trajectory_data = load_json(config.paths.ball_trajectory_data_path)
+    trajectory_data = load_json(ball_trajectory_data_path)
 
     ## 4. Transform trajectory points to rectified space
     # Interpolated values of x, y (ball center) and r for each frame
@@ -143,6 +144,7 @@ def main():
         [(x, y + r) for x, y, r in zip(x_inter, y_inter, r_inter)],
         dtype=np.float32,
     ).reshape(-1, 1, 2)
+    
     # Build image-space contact points (frame, x, y) for the original video overlay
     inter_points_contact_with_frames = np.array(
         [
@@ -158,17 +160,16 @@ def main():
         for frame, (x, y) in zip(f, rectified_inter_points_contact.reshape(-1, 2))
     ]
 
-    # rectified_points_int = np.round(rectified_points).astype(np.int32)
     rectified_inter_points_contact_int = np.round(
         rectified_inter_points_contact
     ).astype(np.int32)
+    
     plot_points(
         rectified_inter_points_contact_int,
         rectified,
-        output_path=config.paths.output_rectified_lane_with_trajectory_path,
+        output_path=output_rectified_lane_with_trajectory_path,
     )
 
-    # Use helper to obtain image corners (accepts image array or path)
     source_board_corners = obtain_corners_from_image(rectified)
 
     destination_board_corners, board_template = obtain_corners_from_image(
@@ -176,26 +177,21 @@ def main():
     )
 
     ## 5. Generate video overlaying ball trajectory on original video and rectified lane
-    
-
     generate_trajectory_video_with_board(
-        input_video_path=config.paths.input_clip_path,
+        input_video_path=input_clip_path,
         image_points=inter_points_contact_with_frames,
         board_points=rectified_inter_points_contact_with_frames,
         board_template_path=config.paths.board_template_path,
         source_lane_corners=source_board_corners,
         destination_board_corners=destination_board_corners,
-        output_video_path=config.paths.output_combined_trajectory_video_path,
+        output_video_path=output_combined_trajectory_video_path,
         color=(0, 0, 255),
         thickness=config.plotting.point_thickness,
         point_radius=config.plotting.point_radius,
         board_margin=config.plotting.board_margin,
     )
 
-
-
     # 3D Reconstruction and Visualization
-
     rectified_contact_points = rectified_inter_points_contact.reshape(-1, 2)
 
     trajectory_3d = []
@@ -209,7 +205,6 @@ def main():
         Z = float(r)
 
         trajectory_3d.append((frame_id, X, Y, Z))
-
     
     create_3d_bowling_visualization(trajectory_3d, lane_width=1.066, lane_length=19.16)
 
