@@ -183,7 +183,7 @@ def generate_trajectory_video_with_board(
 def create_3d_bowling_visualization(
     trajectory_3d,
     lane_width=1.066,
-    lane_length=18.29
+    lane_length=19.16
 ):
     """
     trajectory_3d: list of (frame_id, x, y, z)

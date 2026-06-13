@@ -12,35 +12,9 @@ from utils.utils import (
 
 # Debug output folders
 DEBUG_DIR = "debug"
-GRAYSCALE_DIR = os.path.join(DEBUG_DIR, "grayscale")
 EDGES_DIR = os.path.join(DEBUG_DIR, "edges")
 LINES_DIR = os.path.join(DEBUG_DIR, "lines")
 BEST_DIR = os.path.join(DEBUG_DIR, "best_line")
-os.makedirs(GRAYSCALE_DIR, exist_ok=True)
-os.makedirs(EDGES_DIR, exist_ok=True)
-os.makedirs(LINES_DIR, exist_ok=True)
-os.makedirs(BEST_DIR, exist_ok=True)
-
-
-# def get_vid_lane_boundaries(vid):
-#     lane_boundaries = []
-#     ret, frame = vid.read()
-#     while ret:
-#         frame_lane_boundaries = get_frame_lane_boundaries(frame)
-#         lane_boundaries.append(frame_lane_boundaries)
-#         ret, frame = vid.read()
-#     return lane_boundaries
-
-
-# def get_frame_lane_boundaries(frame):
-#     # Implementation for detecting lane boundaries in a single frame
-#     top = get_top_lane_boundary(frame)
-#     bottom = get_bottom_lane_boundary(
-#         frame, edge_threshold=30, edge_method="sobel", conv_method="r_g_minus_b"
-#     )
-#     # left, right = get_lateral_lane_boundaries(frame)
-#     # return top, bottom, left, right
-#     return top, bottom
 
 
 def preprocess_frame(frame, conv_method="r_g_minus_b", blur_kernel=(5, 5)):
@@ -59,6 +33,10 @@ def get_bottom_lane_boundary(
     hough_max_line_gap=10,
     slope_threshold=0.3,
     crop_region=[0.6, 1.0, 0.15, 0.85],
+    lines_dir=LINES_DIR,
+    edges_dir=EDGES_DIR,
+    best_dir=BEST_DIR,
+    debug=False
 ):
     # Implementation for detecting the bottom lane boundary
 
@@ -73,6 +51,8 @@ def get_bottom_lane_boundary(
         edge_threshold=edge_threshold,
         direction="horizontal",
         debug_prefix="bottom_",
+        edges_dir=edges_dir,
+        debug=debug
     )
 
     # hough transform
@@ -107,25 +87,28 @@ def get_bottom_lane_boundary(
                 best_candidate = line[0]
 
             cv2.line(output, (x1, y1), (x2, y2), (0, 255, 0), 2)
-
-    cv2.imwrite(
-        os.path.join(LINES_DIR, f"lines_{conv_method}_{edge_method}.png"), output
-    )
+    if debug:
+        os.makedirs(lines_dir, exist_ok=True)
+        cv2.imwrite(
+            os.path.join(lines_dir, f"lines_{conv_method}_{edge_method}.png"), output
+        )
 
     filename = f"bottom_best_candidate_line_" f"{conv_method}_{edge_method}.png"
 
     if best_candidate is not None:
         return save_candidate_line(
-            frame, best_candidate, crop_region, [top, left], (0, 255, 0), filename
+            frame, best_candidate, crop_region, [top, left], (0, 255, 0), filename, best_dir=best_dir, debug=debug
         )
     return None
 
 
-def save_candidate_line(frame, line, crop_region, top_left_offset, color, filename):
+def save_candidate_line(frame, line, crop_region, top_left_offset, color, filename, best_dir=BEST_DIR, debug=False):
     vis, _, _ = crop_by_ratio(frame.copy(), crop_region)
     x1, y1, x2, y2 = line
-    cv2.line(vis, (x1, y1), (x2, y2), color, 3)
-    cv2.imwrite(os.path.join(BEST_DIR, filename), vis)
+    if debug:
+        os.makedirs(best_dir, exist_ok=True)
+        cv2.line(vis, (x1, y1), (x2, y2), color, 3)
+        cv2.imwrite(os.path.join(best_dir, filename), vis)
     x1, y1, x2, y2 = get_true_coords(line, crop_region=top_left_offset)
     return [x1, y1, x2, y2]
 
@@ -135,7 +118,10 @@ def get_top_lane_boundary(
     template,
     min_points=3,
     crop_region=[0.0, 0.4, 0.0, 1.0],
-    mode="mid" # "mid" for line connecting midpoints of pins, "bottom" for connecting the bottom of the pins 
+    mode="mid", # "mid" for line connecting midpoints of pins, "bottom" for connecting the bottom of the pins 
+    best_dir=BEST_DIR,
+    lines_dir=LINES_DIR,
+    debug=False
 ):
 
     top_region, _, _ = crop_by_ratio(frame, crop_region)
@@ -157,7 +143,8 @@ def get_top_lane_boundary(
         # threshold=0.85, first vid
         threshold=0.75,
         debug_dir="debug_template",
-        mode=mode
+        mode=mode,
+        debug=debug
     )
 
     if len(midpoints) < min_points:
@@ -191,13 +178,14 @@ def get_top_lane_boundary(
 
     # Viz
     vis_image = top_region.copy()
-    cv2.line(vis_image, (x_min, y_min), (x_max, y_max), (0, 255, 0), 3)
-    for pt in inliers.astype(int):
-        cv2.circle(vis_image, tuple(pt), 5, (255, 0, 0), -1)
-    for pt in outliers.astype(int):
-        cv2.circle(vis_image, tuple(pt), 5, (0, 0, 255), -1)
-    cv2.imwrite(os.path.join(BEST_DIR, "top_boundary_fitted_line.png"), vis_image)
-    cv2.imwrite(os.path.join(LINES_DIR, "top_boundary_midpoints.png"), vis_image)
+    if debug:
+        cv2.line(vis_image, (x_min, y_min), (x_max, y_max), (0, 255, 0), 3)
+        for pt in inliers.astype(int):
+            cv2.circle(vis_image, tuple(pt), 5, (255, 0, 0), -1)
+        for pt in outliers.astype(int):
+            cv2.circle(vis_image, tuple(pt), 5, (0, 0, 255), -1)
+        cv2.imwrite(os.path.join(best_dir, "top_boundary_fitted_line.png"), vis_image)
+        cv2.imwrite(os.path.join(lines_dir, "top_boundary_midpoints.png"), vis_image)
     print(f"Top boundary detected with {len(points)} midpoints")
     print(f"Line equation: y = {m:.4f}x + {b:.4f}")
 
@@ -215,6 +203,10 @@ def get_lateral_lane_boundaries(
     direction="vertical",
     lane_center=None,
     crop_region=[0.15, 0.9, 0.0, 1.0],
+    edges_dir=EDGES_DIR,
+    lines_dir=LINES_DIR,
+    best_dir=BEST_DIR,
+    debug=False
 ):
     blurred = preprocess_frame(frame, conv_method=conv_method)
 
@@ -228,6 +220,8 @@ def get_lateral_lane_boundaries(
         edge_threshold=edge_threshold,
         direction=direction,
         debug_prefix="lateral_",
+        edges_dir=edges_dir,
+        debug=debug
     )
     # hough transform
     lines = cv2.HoughLinesP(
@@ -279,24 +273,25 @@ def get_lateral_lane_boundaries(
             cv2.line(output, (x1, y1), (x2, y2), (0, 255, 0), 2)
             pos_lines += 1
 
-    cv2.circle(
-        output, (int(center_x - left), int(center_y - top)), 5, (255, 0, 0), -1
-    )  # Mark the center point in cropped coordinates
-    cv2.imwrite(
-        os.path.join(LINES_DIR, f"lateral_lines_{conv_method}_{edge_method}.png"),
-        output,
-    )
-    print(os.path.join(LINES_DIR, f"lateral_lines_{conv_method}_{edge_method}.png"))
-    # Save best left/right boundary candidates
-    candidates = {"left": left_candidate, "right": right_candidate}
-    for side, line in candidates.items():
-        if line is None:
-            continue
-        vis = frame.copy()
-        x1, y1, x2, y2 = line
-        cv2.line(vis, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 3)
-        filename = f"lateral_best_{side}_line_" f"{conv_method}_{edge_method}.png"
-        cv2.imwrite(os.path.join(BEST_DIR, filename), vis)
+    if debug:
+        cv2.circle(
+            output, (int(center_x - left), int(center_y - top)), 5, (255, 0, 0), -1
+        )  # Mark the center point in cropped coordinates
+        cv2.imwrite(
+            os.path.join(lines_dir, f"lateral_lines_{conv_method}_{edge_method}.png"),
+            output,
+        )
+        print(os.path.join(lines_dir, f"lateral_lines_{conv_method}_{edge_method}.png"))
+        # Save best left/right boundary candidates
+        candidates = {"left": left_candidate, "right": right_candidate}
+        for side, line in candidates.items():
+            if line is None:
+                continue
+            vis = frame.copy()
+            x1, y1, x2, y2 = line
+            cv2.line(vis, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 3)
+            filename = f"lateral_best_{side}_line_" f"{conv_method}_{edge_method}.png"
+            cv2.imwrite(os.path.join(best_dir, filename), vis)
 
     return left_candidate, right_candidate
 
@@ -308,7 +303,8 @@ def detect_pin_midpoints_template(
     threshold=0.6,
     nms_threshold=0.1,
     debug_dir=None,
-    mode="mid" # "mid" for line connecting midpoints of pins, "bottom" for connecting the bottom of the pins
+    mode="mid", # "mid" for line connecting midpoints of pins, "bottom" for connecting the bottom of the pins
+    debug=False
 ):
     """
     Detect bowling pins using multi-scale template matching.
@@ -372,7 +368,7 @@ def detect_pin_midpoints_template(
         # Debug drawing
         cv2.rectangle(vis, (x1, y1), (x2, y2), (0, 255, 0), 2)
         cv2.circle(vis, (mx, my), 3, (0, 0, 255), -1)
-    if debug_dir is not None:
+    if (debug_dir is not None) and debug:
         os.makedirs(debug_dir, exist_ok=True)
         cv2.imwrite(os.path.join(debug_dir, "template_matches.png"), vis)
     print(f"Detected pins: {len(midpoints)}")
@@ -423,6 +419,8 @@ def detect_edges(
     edge_threshold=None,
     direction="horizontal",
     debug_prefix="",
+    edges_dir=EDGES_DIR,
+    debug=False
 ):
     """Run edge detection on the provided image.
 
@@ -450,10 +448,12 @@ def detect_edges(
         raise ValueError("Invalid edge detection method")
     if edge_threshold is not None:
         _, edges = cv2.threshold(edges, edge_threshold, 255, cv2.THRESH_BINARY)
-    cv2.imwrite(
-        os.path.join(EDGES_DIR, f"{debug_prefix}edges_{method}_{conv_method}.jpg"),
-        edges,
-    )
+    if debug:
+        os.makedirs(edges_dir, exist_ok=True)
+        cv2.imwrite(
+            os.path.join(edges_dir, f"{debug_prefix}edges_{method}_{conv_method}.jpg"),
+            edges,
+        )
     return edges
 
 
