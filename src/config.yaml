@@ -35,11 +35,11 @@ misc:
   calculate_ball_trajectory: false
 
 debug:
-  debug: true
+  debug: false
   best_dir: "debug/best_line"
   lines_dir: "debug/lines"
   edges_dir: "debug/edges"
 
 
 experiments:
-  run_all_videos: true
+  run_all_videos: false
