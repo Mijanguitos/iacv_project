@@ -1,3 +1,33 @@
+clip_paths:
+  clip_1: "data/clips/clip_1.mp4"
+  clip_2: "data/clips/clip_2.mp4"
+  clip_3: "data/clips/clip_3.mp4"
+  clip_5: "data/clips/clip_5.mov"
+  clip_6: "data/clips/clip_6.mov"
+  clip_7: "data/clips/clip_7.mov"
+  clip_8: "data/clips/clip_8.mov"
+  clip_9: "data/clips/clip_9.mp4"
+  clip_10: "data/clips/clip_10.mp4"
+  clip_11: "data/clips/clip_11.mp4"
+  clip_12: "data/clips/clip_12.mp4"
+  clip_13: "data/clips/clip_13.mp4"
+  clip_14: "data/clips/clip_14.mp4"
+  clip_15: "data/clips/clip_15.mp4"
+  clip_16: "data/clips/clip_16.mp4"
+
+ball_detection_paths:
+  outputs:
+    preprocessing:    "src/ball_detection/preprocessing_output/preprocessed_"
+    detection:        "src/ball_detection/detection_output/candidates_"
+    postprocessing:   "src/ball_detection/postprocessing_output/postprocessed_"
+    visualization:    "src/ball_detection/visualization_plotting/"
+
+spin_estimation_paths:
+  outputs:
+    opticalflow_path: "src/spin/optical_flow_output"
+    postprocessing_path: "src/spin/postprocessing_output"
+    visualization_path: "src/spin/spin_output"
+
 paths:
   input_clip_path: "data/clips/clip_11.mp4"
   template_pin_path: "./data/templates/template_pin_real.png"

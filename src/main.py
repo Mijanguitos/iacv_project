@@ -16,8 +16,13 @@ from utils.video_utils import (
     generate_trajectory_video_with_board,
 )
 
+import ball_detection.ball_detection as ball_detection
+import spin.spin as spin
+
 config = load_config("src/config.yaml")
 
+# SELECTION OF THE CLIP TO PROCESS
+CLIP = "clip_1"
 
 def main():
     vid = cv2.VideoCapture(config.paths.input_clip_path)
@@ -86,7 +91,31 @@ def main():
     # {observations: {x:[], y:[], r:[], f:[]},
     # estimations: {x:[], y:[], r:[], f:[]}} from JSON output of the ball tracking module
     if config.misc.calculate_ball_trajectory:
-        # TODO: Implement ball trajectory calculation with interpolation
+
+        lane_points = np.array(lane_borders)
+        video_path = getattr(config.clip_paths, CLIP)
+
+        trajectory_preprocessing_path = f"{config.ball_detection_paths.outputs.preprocessing}{CLIP}"
+        candidate_detection_path = f"{config.ball_detection_paths.outputs.detection}{CLIP}"
+        trajectory_path = f"{config.ball_detection_paths.outputs.postprocessing}{CLIP}"
+        trajectory_visualization_path = f"{config.ball_detection_paths.outputs.visualization}{CLIP}"
+
+        optical_flow_path = f"{config.spin_estimation_paths.outputs.optical_flow_output.opticalflow_path}{CLIP}"
+        spin_postprocessing_path = f"{config.spin_estimation_paths.outputs.postprocessing_output.postprocessing_path}{CLIP}"
+        spin_visualization_path = f"{config.spin_estimation_paths.outputs.visualization_path}{CLIP}"
+
+        ball_detection.ball_detection(lane_points=lane_points, 
+                                      video_path=video_path, 
+                                      preprocessing_path=trajectory_preprocessing_path, 
+                                      detection_path=candidate_detection_path, 
+                                      postprocessing_path=trajectory_path,
+                                      visualization_path=trajectory_visualization_path)
+        spin.ball_spin(trajectory_path=trajectory_path, 
+                       video_path=video_path, 
+                       optical_flow_path=optical_flow_path, 
+                       postprocessing_out_path=spin_postprocessing_path, 
+                       visualization_out_path=spin_visualization_path)
+
         raise NotImplementedError(
             "Ball trajectory calculation not implemented in this script. Please run the ball detection module first to generate the trajectory data."
         )
