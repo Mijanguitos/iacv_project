@@ -3,9 +3,10 @@ import numpy as np
 import os
 
 # Import your custom modules
-import spin.spin_detection as spin_detection
-import spin.spin_postprocessing as spin_postprocessing
-import spin.spin_visualization as spin_visualization
+# Changing to run ONLY spin
+import spin_detection
+import spin_postprocessing
+import spin_visualization
 
 def ball_spin(trajectory_path: os.PathLike[str],
               video_path: os.PathLike[str],
@@ -50,7 +51,7 @@ def ball_spin(trajectory_path: os.PathLike[str],
 if __name__ == "__main__":
     
     # Define the clip you want to process
-    clip = "clip_16"
+    clip = "clip_9"
     extension = ".mp4"
     
     PROJECT_ROOT = Path().resolve()
@@ -58,21 +59,21 @@ if __name__ == "__main__":
 
     # Define Input Paths
     original_video_path = f"{PROJECT_ROOT}\\data\\clips\\{clip}{extension}"
-    trajectory_path = f"{PROJECT_ROOT}\\src\\ball_detection\\postprocessing_output\\postprocessed_{clip}.json"
+    trajectory_path = f"{PROJECT_ROOT}\\src\\ball_detection\\postprocessing_output\\postprocessed_{clip}"
 
     # Define Output Paths
     spin_dir = f"{PROJECT_ROOT}\\src\\spin"
     
     # We pass the base names; the modules will append '_spin.json' and '_postprocessing.json' automatically
-    detection_out_path = f"{spin_dir}\\spin_output\\optical_flow_{clip}"
-    postprocessing_out_path = f"{spin_dir}\\postprocessing_output\\{clip}"
+    detection_out_path = f"{spin_dir}\\optical_flow_output\\optical_flow_{clip}"
+    postprocessing_out_path = f"{spin_dir}\\postprocessing_output\\{clip}_postprocessing"
     visualization_out_path = f"{spin_dir}\\spin_output\\{clip}_rendered.mp4"
 
     # Run the pipeline
     ball_spin(
-        trajectory_path, 
-        original_video_path, 
-        detection_out_path, 
-        postprocessing_out_path, 
-        visualization_out_path
+        trajectory_path=trajectory_path, 
+        video_path=original_video_path, 
+        optical_flow_path=detection_out_path, 
+        postprocessing_out_path=postprocessing_out_path, 
+        visualization_out_path=visualization_out_path
     )

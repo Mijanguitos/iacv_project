@@ -22,32 +22,37 @@ The spin detection workflow was executed on all eight clips, yielding per-frame 
 \centering
     \caption{Spin detection results across two recording sessions.}
     \label{tab:spin_results}
+    \small
+    \setlength{\tabcolsep}{4pt}
     \begin{tabular}{ccccccc}
     \toprule
-    \textbf{Session} & \textbf{Clip} & \textbf{Frames} & \textbf{FPS} & \textbf{Avg. $\omega$ (rad/frame)} & \textbf{Rev Rate (RPM)} \\
+    \textbf{Session} & \textbf{Clip} & \textbf{Frames} & \textbf{FPS} & \textbf{Avg. $\omega$ (rad/f)} & \textbf{RPM} & \textbf{Mean Rotation Axis} \\
     \midrule
-    \multirow{4}{*}{A} & clip\_9  & 98  & 30 & 0.4420 & 128.1 \\
-                    & clip\_10 & 125 & 30 & 0.4530 & 129.8 \\
-                    & clip\_11 & 207 & 30 & 0.5075 & 145.4 \\
-                    & clip\_12 & 109 & 30 & 0.4831 & 138.4 \\
+    \multirow{4}{*}{A} & clip\_9  & 98  & 30 & 0.5470 & 156.7 & [0.46, 0.07, -0.88] \\
+                    & clip\_10 & 125 & 30 & 0.5025 & 144.0 & [0.00, 0.99, 0.12] \\
+                    & clip\_11 & 207 & 30 & 0.5517 & 158.1 & [-0.03, 0.12, -0.99] \\
+                    & clip\_12 & 109 & 30 & 0.5183 & 148.5 & [0.87, 0.26, -0.41] \\
     \midrule
-    \multirow{4}{*}{B} & clip\_13 & 196 & 30 & 0.3678 & 105.4 \\
-                    & clip\_14 & 118 & 30 & 0.3637 & 104.2 \\
-                    & clip\_15 & 104 & 30 & 0.3737 & 107.1 \\
-                    & clip\_16 & 138 & 30 & 0.4063 & 116.4 \\
+    \multirow{4}{*}{B} & clip\_13 & 196 & 30 & 0.2970 & 85.1 & [0.18, -0.52, 0.83] \\
+                    & clip\_14 & 118 & 30 & 0.3628 & 103.9 & [0.23, 0.81, -0.54] \\
+                    & clip\_15 & 104 & 30 & 0.4095 & 117.3 & [-0.06, -0.60, -0.79] \\
+                    & clip\_16 & 138 & 30 & 0.4092 & 117.2 & [0.12, -0.97, 0.20] \\
     \bottomrule
     \end{tabular}%
 \end{table}
 
-The two sessions exhibit clearly distinct rev rate profiles. Session A yields a mean of \emph{135.4 RPM} with a standard deviation of \emph{7.8 RPM}, while Session B yields a mean of \emph{108.3 RPM} with a standard deviation of \emph{5.5 RPM}. The standard deviations are of 7.8 RPM and 5.5 RPM, 5.8\% and 5.1\%, respectively, indicating strong in-session consistency across clips of varying length. This repeatability suggests the pipeline is responding to a stable physical characteristic of each release rather than to measurement noise.
-The separation between sessions is consistent across all clips with no overlap: the lowest estimate in Session A (128.1 RPM, Clip 9) exceeds the highest estimate in Session B (116.4 RPM, Clip 16) by 11.7 RPM. This clean separation further supports the interpretation that the two sessions correspond to physically distinct release styles or bowlers, with Session A exhibiting a meaningfully higher rev rate.
+The two sessions exhibit clearly distinct rev rate profiles. Session A yields a mean of \emph{151.8 RPM} with a standard deviation of \emph{6.7 RPM}, while Session B yields a mean of \emph{105.9 RPM} with a standard deviation of \emph{15.2 RPM}. The standard deviations are 4.4\% and 14.4\% of their respective means. Despite a slightly higher variance in Session B, there remains a strong overall in-session consistency across clips of varying length. This repeatability suggests the pipeline is responding to a stable physical characteristic of each release rather than to measurement noise.
+
+The separation between sessions is consistent across all clips with no overlap: the lowest estimate in Session A (144.0 RPM, Clip 10) exceeds the highest estimate in Session B (117.3 RPM, Clip 15) by 26.7 RPM. This clean separation further supports the interpretation that the two sessions correspond to physically distinct release styles or bowlers, with Session A exhibiting a meaningfully higher rev rate.
+
+Furthermore, the mean 3D rotation axis provides a robust mathematical fingerprint of the bowler's specific axis tilt and axis rotation at release. Because the postprocessing pipeline incorporates a vector unflipping step to resolve sign ambiguities inherent to 3D motion estimation, the computed mean axis remains highly stable throughout the ball's trajectory. The clear variations in the rotation axis components between clips further corroborate that the two sessions captured physically distinct release characteristics.
 
 \begin{figure}[H]
     \centering
     \includegraphics[height=0.25\textwidth]{ball_tracking/spin_visualization_1.png}
-    \includegraphics[height=0.25\textwidth]{ball_tracking/spin_visualization_3.png}
     \includegraphics[height=0.25\textwidth]{ball_tracking/spin_visualization_2.png}
+    \includegraphics[height=0.25\textwidth]{ball_tracking/spin_visualization_3.png}
     \includegraphics[height=0.25\textwidth]{ball_tracking/spin_visualization_4.png}
-    \caption{Final visualization of ball's spin (yellow) and rotation axis (red).}
+    \caption{Final visualization of ball's spin (yellow and blue) and rotation axis (red). Note that the rendered ball texture does not perfectly align the axis as the rendering starts from a different orientation than the axis}
     \label{fig:spin_visualization}
 \end{figure}

@@ -4,10 +4,10 @@ import numpy as np
 import os
 
 # Custom modules
-import ball_detection.preprocessing as preprocessing
-import ball_detection.candidate_detection as candidate_detection
-import ball_detection.postprocessing as postprocessing
-import ball_detection.visualization as visualization
+import preprocessing as preprocessing
+import candidate_detection as candidate_detection
+import postprocessing as postprocessing
+import visualization as visualization
 
 def order_lane_points(points):
     """
@@ -81,10 +81,10 @@ if __name__ == "__main__":
     #lane_points = np.array([[608, 983], [1186, 1016], [1259, 350], [1131, 344]])   # For clip 7
     #lane_points = np.array([[325, 1074], [1683, 1071], [1573, 385], (1259, 394)])   # For clip 8
 
-    #lane_points = np.array([[390, 861], [1085, 878], [1148, 222],  [979, 221]]) # For clip 9, 10, 11 and 12
-    lane_points = np.array([[266, 1048], [1043, 1048], [1103, 169], [912, 171]]) # For clip 13, 14, 15 and 16
+    lane_points = np.array([[390, 861], [1085, 878], [1148, 222],  [979, 221]]) # For clip 9, 10, 11 and 12
+    #lane_points = np.array([[266, 1048], [1043, 1048], [1103, 169], [912, 171]]) # For clip 13, 14, 15 and 16
 
-    clip = "clip_16"   # Change this variable to select the clip to be processed
+    clip = "clip_12"   # Change this variable to select the clip to be processed
     extension = ".mp4"
 
     PROJECT_ROOT = Path().resolve()

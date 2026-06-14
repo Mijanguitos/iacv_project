@@ -151,18 +151,18 @@ def compute_rotation(old3d, new3d):
         Vt[-1, :] *= -1
         R = Vt.T @ U.T
 
-    cos_theta = np.clip((np.trace(R) - 1) / 2, -1.0, 1.0)
-    theta = np.arccos(cos_theta)
+    cos_omega = np.clip((np.trace(R) - 1) / 2, -1.0, 1.0)
+    omega = np.arccos(cos_omega)
 
-    if np.isclose(theta, 0):
+    if np.isclose(omega, 0):
         axis = np.array([0.0, 0.0, 1.0])
     else:
         axis = np.array([R[2, 1] - R[1, 2], R[0, 2] - R[2, 0], R[1, 0] - R[0, 1]]) / (
-            2 * np.sin(theta)
+            2 * np.sin(omega)
         )
         axis /= np.linalg.norm(axis)
 
-    return axis, theta
+    return axis, omega
 
 def spin_detection(trajectory_path: os.PathLike[str], 
                    video_path: os.PathLike[str],
@@ -251,7 +251,7 @@ def spin_detection(trajectory_path: os.PathLike[str],
                 print(f"Frame {i} skipped: Not enough valid 3D points ({old3d.shape[0]})")
                 continue # Abort the rest of the loop and move to the next frame
 
-            axis, theta = compute_rotation(old3d, new3d)
+            axis, omega = compute_rotation(old3d, new3d)
 
             # Create a copy of the ROI so we don't draw on the original image data
             # Create copies so we don't draw on the original data
@@ -313,10 +313,9 @@ def spin_detection(trajectory_path: os.PathLike[str],
                 "x_axis": axis[0],
                 "y_axis": axis[1],
                 "z_axis": axis[2],
-                "angle": theta,
+                "omega": omega,
             }
 
-    
     with open(f"{save_path}.json", 'w') as f:
         json.dump(spin_output, f, indent=4)
 
@@ -328,8 +327,8 @@ if __name__ == "__main__":
     clip = "clip_1"
     extension = ".mp4"
     video_path = f"{PROJECT_ROOT}\\data\\clips\\{clip}{extension}"
-    save_path = f"{PROJECT_ROOT}\\src\\spin\\spin_output\\{clip}"
-    trajectory_path = f"{PROJECT_ROOT}\\src\\ball_detection\\postprocessing_output\\postprocessed_{clip}.json"
+    save_path = f"{PROJECT_ROOT}\\src\\spin\\optical_flow_output\\optical_flow_{clip}"
+    trajectory_path = f"{PROJECT_ROOT}\\src\\ball_detection\\postprocessing_output\\postprocessed_{clip}"
 
     spin_detection(trajectory_path, video_path, save_path)
 

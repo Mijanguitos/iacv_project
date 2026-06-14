@@ -151,4 +151,6 @@ Finally, the 3D unit vector $[X, Y, Z]$ defining the stable rotational core of t
     \end{bmatrix}
 \end{equation}
 
+This normalized 3D vector represents the instantaneous axis of rotation in the camera's coordinate system. Physically, the $X$ component corresponds to the horizontal axis (forward roll or backspin), the $Y$ component corresponds to the vertical axis (side-spin, rotating like a top), and the $Z$ component represents depth roll (rotating around the viewing axis). In bowling terminology, the specific combination of these components mathematically characterizes the bowler's \emph{axis tilt} and \emph{axis rotation}, which ultimately dictate how the ball will hook as it travels down the lane.
+
 The kinematic solver outputs a frame-by-frame estimation of the raw 3D spin axis and angular velocity. However, this raw data is inherently corrupted by high-frequency noise from the optical flow process, as the number and direction of features are not always consistent and can yield inaccurate results. The final postprocessing workflow addresses axis-sign ambiguity correction, outlier removal, interpolation, and smoothing.
