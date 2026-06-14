@@ -136,14 +136,14 @@ Having extracted the orthogonal components, the optimal rotation matrix $R$ is c
 R = V U^T
 \end{equation}
 
-While the matrix $R$ fully describes the orientation change, it is not directly interpretable in terms of physical kinematics. Therefore, we convert $R$ into an axis-angle representation. The angular velocity (the magnitude of rotation per frame), $\theta$, is derived from the trace of the rotation matrix:
+While the matrix $R$ fully describes the orientation change, it is not directly interpretable in terms of physical kinematics. Therefore, we convert $R$ into an axis-angle representation. The angular velocity (the magnitude of rotation per frame), $\omega$, is derived from the trace of the rotation matrix:
 \begin{equation}
-\theta = \arccos\left(\frac{\operatorname{tr}(R) - 1}{2}\right)
+\omega = \arccos\left(\frac{\operatorname{tr}(R) - 1}{2}\right)
 \end{equation}
 
 Finally, the 3D unit vector $[X, Y, Z]$ defining the stable rotational core of the ball (the spin axis) is extracted from the off-diagonal elements of $R$:
 \begin{equation}
-    \text{Axis} = \frac{1}{2 \sin(\theta)}
+    \text{Axis} = \frac{1}{2 \sin(\omega)}
     \begin{bmatrix}
         R_{32} - R_{23} \\
         R_{13} - R_{31} \\

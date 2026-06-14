@@ -12,9 +12,9 @@ The ball detection pipeline was applied to eight clips across two release sessio
     \label{fig:final_tracking}
 \end{figure}
 
-The spin detection workflow was executed on all eight clips, yielding per-frame estimates of the rotation axis and angular velocity as shown in Table \ref{tab:spin_results}. The angular velocity $\theta$ is computed per consecutive frame pair via the Kabsch algorithm and averaged across the clip. The rev rate is derived as:
+The spin detection workflow was executed on all eight clips, yielding per-frame estimates of the rotation axis and angular velocity as shown in Table \ref{tab:spin_results}. The angular velocity $\omega$ is computed per consecutive frame pair via the Kabsch algorithm and averaged across the clip. The rev rate is derived as:
 \begin{equation}
-	RPM = \dfrac{\theta \cdot fps }{2\pi}\cdot 60
+	RPM = \dfrac{\omega \cdot fps }{2\pi}\cdot 60
 \end{equation}
 
 
@@ -24,7 +24,7 @@ The spin detection workflow was executed on all eight clips, yielding per-frame 
     \label{tab:spin_results}
     \begin{tabular}{ccccccc}
     \toprule
-    \textbf{Session} & \textbf{Clip} & \textbf{Frames} & \textbf{FPS} & \textbf{Avg. $\theta$ (rad/frame)} & \textbf{Rev Rate (RPM)} \\
+    \textbf{Session} & \textbf{Clip} & \textbf{Frames} & \textbf{FPS} & \textbf{Avg. $\omega$ (rad/frame)} & \textbf{Rev Rate (RPM)} \\
     \midrule
     \multirow{4}{*}{A} & clip\_9  & 98  & 30 & 0.4420 & 128.1 \\
                     & clip\_10 & 125 & 30 & 0.4530 & 129.8 \\
