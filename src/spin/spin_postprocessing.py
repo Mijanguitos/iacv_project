@@ -8,7 +8,7 @@ import math
 import os
 
 # Helper plotting function
-def plotting(frames, x_axes, y_axes, z_axes, angles, stage_name = "Default"):
+def plotting(frames, x_axes, y_axes, z_axes, omegas, stage_name = "Default"):
     # Create a 2-row subplot sharing the X-axis (Frames)
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
     fig.suptitle(f"Pipeline Stage: {stage_name}", fontsize=14, fontweight='bold')
@@ -22,10 +22,10 @@ def plotting(frames, x_axes, y_axes, z_axes, angles, stage_name = "Default"):
     ax1.grid(True, linestyle="--", alpha=0.6)
     ax1.legend(loc="best")
 
-    # Bottom Plot: Angle
-    ax2.plot(frames, angles, label="Angle (Rads/Frame)", color="purple", marker=".", markersize=4)
+    # Bottom Plot: Omega
+    ax2.plot(frames, omegas, label="Omega (Rads/Frame)", color="purple", marker=".", markersize=4)
     ax2.set_xlabel("Frame Number")
-    ax2.set_ylabel("Angle")
+    ax2.set_ylabel("Omega")
     ax2.grid(True, linestyle="--", alpha=0.6)
     ax2.legend(loc="best")
 
@@ -70,30 +70,30 @@ def remove_axes_outliers(x_axes, y_axes, frames, threshold=0.5):
 
     return x_axes, y_axes
 
-def remove_angle_outliers(angles, threshold = 1.0):
+def remove_omega_outliers(omegas, threshold = 1.0):
     """
-    Removes statistically abnormal angles using Z-score filtering.
-    Operates directly on a list of angles.
+    Removes statistically abnormal omegas using Z-score filtering.
+    Operates directly on a list of omegas.
     """
         
     # 2. Calculate the Mean and Standard Deviation
-    mean_angle = statistics.mean(angles)
-    std_angle = statistics.stdev(angles)
+    mean_omega = statistics.mean(omegas)
+    std_omega = statistics.stdev(omegas)
     
-    # Prevent division by zero in the rare case that all angles are exactly identical
-    if std_angle == 0:
-        return angles
+    # Prevent division by zero in the rare case that all omegas are exactly identical
+    if std_omega == 0:
+        return omegas
         
     # 3. Apply the Z-score filter
-    for i, angle in enumerate(angles):
-        if angle is not None:
-            z_score = abs(angle - mean_angle) / std_angle
+    for i, omega in enumerate(omegas):
+        if omega is not None:
+            z_score = abs(omega - mean_omega) / std_omega
             
             # If it exceeds the threshold, nullify it
             if z_score > threshold:
-                angles[i] = None
+                omegas[i] = None
                 
-    return angles
+    return omegas
 
 # INTERPOLATION AND SMOOTHING FUNCTIONS
 def fill_gaps(series):
@@ -225,9 +225,9 @@ def spin_post_processing(json_path: os.PathLike[str],
     y_axes = [frame["y_axis"] for frame in data.values()]
     z_axes = [frame["z_axis"] for frame in data.values()]
     frames = [frame["frame"] for frame in data.values()]
-    angles = [frame["angle"] for frame in data.values()]
+    omegas = [frame.get("omega", frame.get("angle")) for frame in data.values()]
     
-    #plotting(frames, x_axes, y_axes, z_axes, angles, "Imported data")
+    #plotting(frames, x_axes, y_axes, z_axes, omegas, "Imported data")
 
 
     # Get the original's video frame count and rate for interpolation reference
@@ -264,76 +264,70 @@ def spin_post_processing(json_path: os.PathLike[str],
     frames = [frame["frame"] for frame in data.values()]
 
     x_axes_clean, y_axes_clean = remove_axes_outliers(x_axes, y_axes, frames)
-    angles_clean = remove_angle_outliers(angles, threshold=0.5)
-    #plotting(frames, x_axes_clean, y_axes_clean, z_axes, angles_clean, "Outlier removal")
+    omegas_clean = remove_omega_outliers(omegas, threshold=0.5)
+    #plotting(frames, x_axes_clean, y_axes_clean, z_axes, omegas_clean, "Outlier removal")
 
     # Interpolation process
     x_axes_filled = fill_gaps(x_axes_clean)
     y_axes_filled = fill_gaps(y_axes_clean)
-    angles_filled = fill_gaps(angles)
-    #plotting(frames, x_axes_filled, y_axes_filled, z_axes, angles_filled, "Linear interpolation")
+    omegas_filled = fill_gaps(omegas)
+    #plotting(frames, x_axes_filled, y_axes_filled, z_axes, omegas_filled, "Linear interpolation")
 
     x_axes_smoothed = gaussian_smoothing(x_axes_filled, sigma=10.0)
     y_axes_smoothed = gaussian_smoothing(y_axes_filled, sigma=10.0)
-    #plotting(frames, x_axes_smoothed, y_axes_smoothed, z_axes, angles_filled, "Gaussian smoothing")
+    #plotting(frames, x_axes_smoothed, y_axes_smoothed, z_axes, omegas_filled, "Gaussian smoothing")
 
     # Monotonic x-axis rotation
     x_axes_monotonic = enforce_non_decreasing_x(x_axes_smoothed)
-    #plotting(frames, x_axes_monotonic, y_axes_smoothed, z_axes, angles_filled, "Monotonic x-axis rotation")
+    #plotting(frames, x_axes_monotonic, y_axes_smoothed, z_axes, omegas_filled, "Monotonic x-axis rotation")
 
     # Scale the axes
     x_axes_scaled = scale_x_axis(x_axes_monotonic)
     y_axes_scaled = scale_y_axis(y_axes_smoothed)
-    #plotting(frames, x_axes_scaled, y_axes_scaled, z_axes, angles_filled, "X and Y axis scaling")
+    #plotting(frames, x_axes_scaled, y_axes_scaled, z_axes, omegas_filled, "X and Y axis scaling")
 
     # Recalculate the Z-Axis so X^2 + Y^2 + Z^2 = 1
     z_axis_avg = statistics.mean(z_axes) if z_axes else 1.0
     z_axes_final = compute_z_axis(x_axes_scaled, y_axes_scaled, z_axis_avg)
-    #plotting(frames, x_axes_scaled, y_axes_scaled, z_axes_final, angles_filled, "Final z-axis calculation")
+    #plotting(frames, x_axes_scaled, y_axes_scaled, z_axes_final, omegas_filled, "Final z-axis calculation")
 
 
-    final_angles = [frame["angle"] for frame in data.values() if frame["angle"] is not None]
+    final_omegas = [frame.get("omega", frame.get("angle")) for frame in data.values() if frame.get("omega", frame.get("angle")) is not None]
     
-    if final_angles:
+    if final_omegas:
         # 2. Calculate the average radians per frame
-        avg_rads_per_frame = statistics.mean(final_angles)
+        avg_rads_per_frame = statistics.mean(final_omegas)
         
         # 3. Apply the RPM conversion formula
         fps = fps
         rpm = (avg_rads_per_frame * fps / (2 * math.pi)) * 60.0
         
-        print(f"Average Angle (Rads/Frame): {avg_rads_per_frame:.4f}")
+        print(f"Average Angular Velocity (Omega) (Rads/Frame): {avg_rads_per_frame:.4f}")
         print(f"Calculated Rev Rate: {rpm:.1f} RPM")
     else:
-        print("No valid angles remaining to calculate RPM.")
+        print("No valid omegas remaining to calculate RPM.")
 
-    """ 
-    first_frames = list(data.values())[:5]
-    
-    if first_frames:
-        avg_x = statistics.mean([f["x_axis"] for f in first_frames])
-        avg_y = statistics.mean([f["y_axis"] for f in first_frames])
-        avg_z = statistics.mean([f["z_axis"] for f in first_frames])
+    valid_frames = [f for f in data.values() if f.get("omega", f.get("angle")) is not None]
+    if valid_frames:
+        avg_x = statistics.mean([f["x_axis"] for f in valid_frames])
+        avg_y = statistics.mean([f["y_axis"] for f in valid_frames])
+        avg_z = statistics.mean([f["z_axis"] for f in valid_frames])
         
-        # Axis Tilt: The vertical angle from the horizon
-        # We use abs(avg_y) assuming the Y axis represents vertical tilt
-        tilt_rads = math.asin(abs(avg_y))
-        tilt_degrees = math.degrees(tilt_rads)
-        
-        # Axis Rotation: The angle relative to the foul line (X axis)
-        # We use atan2 to safely handle division by zero
-        rotation_rads = math.atan2(abs(avg_z), abs(avg_x))
-        rotation_degrees = math.degrees(rotation_rads)
-        
-        print(f"Axis Tilt: {tilt_degrees:.1f}°")
-        print(f"Axis Rotation: {rotation_degrees:.1f}°")
-    """
+        norm = math.sqrt(avg_x**2 + avg_y**2 + avg_z**2)
+        if norm > 0:
+            avg_x /= norm
+            avg_y /= norm
+            avg_z /= norm
+            
+        print(f"Average Rotation Axis: [{avg_x:.4f}, {avg_y:.4f}, {avg_z:.4f}]")
 
     for i, (key, frame_data) in enumerate(data.items()):
         frame_data["x_axis"] = x_axes_scaled[i]
         frame_data["y_axis"] = y_axes_scaled[i]
         frame_data["z_axis"] = z_axes_final[i]
-        frame_data["angle"] = angles_filled[i]
+        frame_data["omega"] = omegas_filled[i]
+        if "angle" in frame_data:
+            del frame_data["angle"]
 
     with open(f"{save_path}.json", 'w') as f:
         json.dump(data, f, indent=4)
@@ -348,8 +342,8 @@ if __name__ == "__main__":
     video_path = f"{PROJECT_ROOT}\\src\\ball_detection\\preprocessing_output\\preprocessed_{clip}"
     original_video_path = f"{PROJECT_ROOT}\\data\\clips\\{clip}{extension}"
     print(f"Original video path: {original_video_path}")
-    json_path = f"{PROJECT_ROOT}\\src\\spin\\spin_output\\{clip}_spin"
-    save_path = f"{PROJECT_ROOT}\\src\\spin\\postprocessing_output\\{clip}"
+    json_path = f"{PROJECT_ROOT}\\src\\spin\\optical_flow_output\\optical_flow_{clip}"
+    save_path = f"{PROJECT_ROOT}\\src\\spin\\postprocessing_output\\{clip}_postprocessing"
     trajectory_path = f"{PROJECT_ROOT}\\src\\ball_detection\\postprocessing_output\\postprocessed_{clip}.json"
 
     spin_post_processing(json_path, save_path, video_path, original_video_path, trajectory_path)

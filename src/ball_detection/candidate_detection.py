@@ -36,8 +36,8 @@ def circle_detection(frame: cv2.typing.MatLike) -> np.ndarray:
     circles = cv2.HoughCircles(frame,
                                method=cv2.HOUGH_GRADIENT_ALT,
                                dp=1.2,      #1.2                 # downsample size
-                               minDist=50, #100          # minimum distance between detected cirlces
-                               param1=200,  #300             # upper threshold for canny edge detection
+                               minDist=45, #100          # minimum distance between detected cirlces
+                               param1=250,  #300             # upper threshold for canny edge detection
                                param2=0.8,  #40             # cummulator (lower) threshold for canny edge detection
                                minRadius=15,
                                maxRadius=70)
