@@ -4,9 +4,9 @@ import os
 
 # Import your custom modules
 # Changing to run ONLY spin
-import spin_detection
-import spin_postprocessing
-import spin_visualization
+import spin.spin_detection as spin_detection
+import spin.spin_postprocessing as spin_postprocessing
+import spin.spin_visualization as spin_visualization
 
 def ball_spin(trajectory_path: os.PathLike[str],
               video_path: os.PathLike[str],

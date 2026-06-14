@@ -4,10 +4,10 @@ import numpy as np
 import os
 
 # Custom modules
-import preprocessing as preprocessing
-import candidate_detection as candidate_detection
-import postprocessing as postprocessing
-import visualization as visualization
+import ball_detection.preprocessing as preprocessing
+import ball_detection.candidate_detection as candidate_detection
+import ball_detection.postprocessing as postprocessing
+import ball_detection.visualization as visualization
 
 def order_lane_points(points):
     """
